@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "darwin-arm64", "linux-musl-openssl-3.0.x", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  PRO
+  ADMIN
+}
+
+enum AdStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  REJECTED
+  SOLD
+  EXPIRED
+}
+
+enum AdType {
+  AUCTION
+  SALE
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  name          String?
+  password      String
+  role          Role           @default(USER)
+  createdAt     DateTime       @default(now())
+  
+  // Profile fields
+  photoUrl      String?
+  
+  // Pro fields
+  companyName   String?
+  siret         String?
+  specialties   String?        // JSON or comma-separated
+  
+  // Relations
+  ads           Ad[]
+  bids          Bid[]
+  notifications Notification[]
+  purchases     Ad[]           @relation("BuyerAds")
+}
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  slug  String @unique
+  ads   Ad[]
+}
+
+model Ad {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  
+  // Product Details
+  dimensions  String?  // stored as "LxWxH" or JSON
+  weight      Float?   // in kg
+  
+  // Images & Docs
+  images      String[] // Array of image URLs
+  documents   String[] // Array of document URLs
+  
+  // Location
+  location    String?
+  
+  // Status & Type
+  status      AdStatus @default(PENDING)
+  type        AdType
+  
+  // Pricing & Auction
+  price       Float?    // Buy now price for SALE, or Start price for AUCTION
+  reservePrice Float?   // Min price for auction
+  buyNowPrice Float?    // Optional buy now price for auction?
+  
+  startDate   DateTime  @default(now())
+  endDate     DateTime? // Required for auctions
+  
+  // Relations
+  categoryId  Int
+  category    Category  @relation(fields: [categoryId], references: [id])
+  
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  
+  buyerId     Int?
+  buyer       User?     @relation("BuyerAds", fields: [buyerId], references: [id])
+  
+  bids        Bid[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Bid {
+  id        Int      @id @default(autoincrement())
+  amount    Float
+  
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  
+  adId      Int
+  ad        Ad       @relation(fields: [adId], references: [id])
+  
+  isAutoBid Boolean  @default(false)
+  maxLimit  Float?   // For auto-bidding
+  
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  message   String
+  read      Boolean  @default(false)
+  link      String?
+  
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
+}
+

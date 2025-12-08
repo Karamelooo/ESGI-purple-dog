@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: leboncoin-postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: leboncoindb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: leboncoin-app
+    environment:
+      DATABASE_URL: postgres://user:password@postgres:5432/leboncoindb
+      NODE_ENV: development
+      AUTH_SECRET: "G8YPrqVFWtJ3TtprdPwNAf/Nw6ogclVo34lK49RV2jk="
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+    command: npm run dev
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: hackathon2-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: always
+
+volumes:
+  postgres_data:
+  ollama_data:
