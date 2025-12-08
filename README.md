@@ -127,6 +127,16 @@ docker exec leboncoin-app rm -rf .next
 docker restart leboncoin-app
 ```
 
+### 🐛 Problèmes spécifiques au Mode Dev
+Si vous rencontrez des erreurs de modules (`Can't resolve...`) ou Prisma en mode dev :
+```bash
+# Réinstaller les dépendances dans le conteneur dev
+docker exec leboncoin-app-dev npm install tailwindcss-animate class-variance-authority clsx tailwind-merge @radix-ui/react-slot
+docker exec leboncoin-app-dev apk add openssl
+docker exec leboncoin-app-dev npx prisma generate
+docker restart leboncoin-app-dev
+```
+
 ---
 
 ## 📂 Schéma de Base de Données
