@@ -71,6 +71,17 @@ docker compose up -d
 ```
 *Note : Le premier lancement peut être long (téléchargement des images et du modèle IA).*
 
+### 3b. Mode Développement Léger (Sans IA) ⚡️
+Pour économiser des ressources (RAM), vous pouvez lancer une version sans le service Ollama (l'estimation de prix ne fonctionnera pas, mais l'app ne plantera pas) :
+```bash
+docker compose -f docker-compose.dev.yml up -d
+```
+Les conteneurs auront le suffixe `-dev` (ex: `leboncoin-app-dev`). Pensez à initialiser la DB spécifique à cet environnement :
+```bash
+docker exec leboncoin-app-dev npx prisma migrate dev
+docker exec leboncoin-app-dev npx prisma db seed
+```
+
 ### 4. Initialiser la Base de Données
 Une fois les conteneurs lancés, initialisez la DB et les données de test :
 ```bash
