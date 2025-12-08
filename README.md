@@ -118,4 +118,56 @@ docker restart leboncoin-app
 
 ---
 
+## 📂 Schéma de Base de Données
+
+```mermaid
+erDiagram
+    User ||--o{ Ad : "posts"
+    User ||--o{ Ad : "buys"
+    User ||--o{ Bid : "places"
+    User ||--o{ Notification : "receives"
+    Ad ||--|| Category : "belongs to"
+    Ad ||--o{ Bid : "has"
+
+    User {
+        int id PK
+        string email
+        string role "USER | PRO | ADMIN"
+        string companyName "Nullable"
+        string siret "Nullable"
+    }
+
+    Ad {
+        int id PK
+        string title
+        float price
+        string type "SALE | AUCTION"
+        string status "ACTIVE | SOLD | ..."
+        int userId FK
+        int buyerId FK "Nullable"
+    }
+
+    Bid {
+        int id PK
+        float amount
+        int userId FK
+        int adId FK
+    }
+
+    Category {
+        int id PK
+        string name
+        string slug
+    }
+
+    Notification {
+        int id PK
+        string message
+        boolean read
+        int userId FK
+    }
+```
+
+---
+
 *Développé pour le Hackathon ESGI 2024.*
