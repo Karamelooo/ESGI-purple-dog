@@ -7,8 +7,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_DB: ${POSTGRES_DB:-leboncoindb}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -25,8 +23,8 @@ services:
       NODE_ENV: production
       AUTH_SECRET: ${AUTH_SECRET}
       # Add other environment variables here as needed
-    ports:
-      - "3000"
+      # ports:
+      #   - "3000:3000" # Traefik routes traffic internally; no host exposure needed
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.hackathon2-app.rule=Host(`${DOMAIN_NAME}`)"
