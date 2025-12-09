@@ -19,7 +19,7 @@ export default async function RootLayout({
       <body>
         <header className="sticky top-0 z-50 bg-white border-b border-gray-200 h-[72px] flex items-center shadow-sm">
           <div className="container mx-auto px-4 flex items-center justify-between">
-            <a href="/" className="text-2xl font-extrabold text-purple-700 tracking-tighter">Purple Dog</a>
+            <a href="/" className="text-2xl font-extrabold text-purple-700 tracking-tighter"><img src="/PurpleDog.svg" alt="Purple Dog" className="h-15" /></a>
 
             <nav className="flex items-center gap-4">
               {session?.user ? (
