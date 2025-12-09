@@ -18,12 +18,12 @@ export default async function ProDashboardPage() {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-gray-900">Tableau de bord Professionnel</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Tableau de bord professionnel</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Annonces Totales</CardTitle>
+                        <CardTitle className="text-sm font-medium text-gray-500">Annonces totales</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold">{adCount}</div>
@@ -40,7 +40,7 @@ export default async function ProDashboardPage() {
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Note Vendeur</CardTitle>
+                        <CardTitle className="text-sm font-medium text-gray-500">Note vendeur</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold">4.8/5</div>
@@ -49,7 +49,7 @@ export default async function ProDashboardPage() {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-bold mb-4">Mes Annonces</h2>
+                <h2 className="text-lg font-bold mb-4">Mes annonces</h2>
                 {ads.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                         Aucune activité récente.

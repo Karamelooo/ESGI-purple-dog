@@ -27,7 +27,7 @@ export default async function DashboardLayout({
                         {/* Bloc Texte (Nom et Statut) */}
                         <div className="flex flex-col">
                             <h2 className="font-bold text-lg mb-0">{session.user.name}</h2> 
-                            <p className="text-sm text-gray-500">{isPro ? 'Compte Professionnel' : 'Compte Particulier'}</p>
+                            <p className="text-sm text-gray-500">{isPro ? 'Compte professionnel' : 'Compte particulier'}</p>
                         </div>
                         
                         {/* Cloche de Notification */}
@@ -44,13 +44,13 @@ export default async function DashboardLayout({
                         </Link>
                         <Link href={`/dashboard/${isPro ? 'pro' : 'user'}/ads`}>
                             <Button variant="ghost" className="w-full justify-start">
-                                Mes Annonces
+                                Mes annonces
                             </Button>
                         </Link>
                         {/* Rappel : Lien conservé en /bi comme demandé */}
                         <Link href={`/dashboard/${isPro ? 'pro' : 'user'}/bi`}>
                             <Button variant="ghost" className="w-full justify-start">
-                                {isPro ? 'Mes Achats & Enchères' : 'Mes Achats'}
+                                {isPro ? 'Mes achats et enchères' : 'Mes achats'}
                             </Button>
                         </Link>
                         <Link href="/deposer-une-annonce">

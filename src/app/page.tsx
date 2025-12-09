@@ -33,7 +33,7 @@ export default async function Home() {
 
       {/* Featured Objects (Dynamic) */}
       <div className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Dernières Annonces</h2>
+        <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Dernières annonces</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
           {latestAds.map((ad) => (
             <Link key={ad.id} href={`/ad/${ad.id}`}>
@@ -65,10 +65,10 @@ export default async function Home() {
       {/* Categories Grid (5x2) */}
       <section className="bg-gray-50 py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">Nos Catégories</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">Nos catégories</h2>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {['Bijoux & Montres', 'Meubles Anciens', 'Art & Tableaux', 'Collection', 'Vins & Spiritueux',
-              'Instruments', 'Livres Anciens', 'Mode & Luxe', 'Horlogerie', 'Sculptures'].map((cat) => (
+            {['Bijoux et montres', 'Meubles anciens', 'Art et tableaux', 'Collection', 'Vins et spiritueux',
+              'Instruments', 'Livres anciens', 'Mode et luxe', 'Horlogerie', 'Sculptures'].map((cat) => (
                 <Card key={cat} className="hover:shadow-lg transition-shadow cursor-pointer border-none shadow-sm">
                   <CardContent className="flex items-center justify-center h-32 p-4 text-center">
                     <span className="font-semibold text-purple-900">{cat}</span>
@@ -97,7 +97,7 @@ export default async function Home() {
           <h2 className="text-2xl font-bold mb-4">Restez informé</h2>
           <p className="mb-8 text-purple-200">Recevez les dernières tendances et objets d&apos;exception.</p>
           <div className="flex flex-col sm:flex-row gap-3">
-            <input type="email" placeholder="Votre email" className="flex-1 px-4 py-3 rounded-lg text-gray-900 focus:outline-none" />
+            <input type="email" placeholder="Votre adresse mail" className="flex-1 px-4 py-3 rounded-lg text-gray-900 focus:outline-none" />
             <Button size="lg" variant="secondary" className="font-bold">
               S&apos;inscrire
             </Button>
@@ -109,8 +109,8 @@ export default async function Home() {
       <footer className="bg-gray-900 text-gray-400 py-12 text-center text-sm">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex gap-6">
-            <Link href="#" className="hover:text-white">Mentions Légales</Link>
-            <Link href="#" className="hover:text-white">Qui Sommes-Nous ?</Link>
+            <Link href="#" className="hover:text-white">Mentions légales</Link>
+            <Link href="#" className="hover:text-white">Qui sommes nous ?</Link>
           </div>
           <Button variant="outline" className="border-gray-600 text-gray-300 hover:text-white hover:border-white">
             Nous contacter

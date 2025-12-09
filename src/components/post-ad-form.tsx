@@ -77,7 +77,7 @@ export function PostAdForm({ categories }: { categories: any[] }) {
                         <Input
                             name="title"
                             required
-                            placeholder="Ancien Vase Ming..."
+                            placeholder="Ancien vase Ming..."
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                         />

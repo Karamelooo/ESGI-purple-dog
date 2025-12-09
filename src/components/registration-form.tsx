@@ -27,7 +27,7 @@ export function RegistrationForm() {
                 <TabsContent value="particulier">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Créer un compte Particulier</CardTitle>
+                            <CardTitle>Créer un compte particulier</CardTitle>
                             <CardDescription>Pour vendre vos objets d'exception.</CardDescription>
                         </CardHeader>
                         <form action={userAction}>
@@ -65,7 +65,7 @@ export function RegistrationForm() {
                 <TabsContent value="professionnel">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Créer un compte Professionnel</CardTitle>
+                            <CardTitle>Créer un compte professionnel</CardTitle>
                             <CardDescription>Pour acheter et vendre sur la plateforme.</CardDescription>
                         </CardHeader>
                         <form action={proAction}>

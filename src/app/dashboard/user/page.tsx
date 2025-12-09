@@ -15,12 +15,12 @@ export default async function UserDashboardPage() {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-gray-900">Mon Espace Particulier</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Mon espace particulier</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Mes Annonces En Ligne</CardTitle>
+                        <CardTitle className="text-sm font-medium text-gray-500">Mes annonces en ligne</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold">{adCount}</div>
@@ -37,7 +37,7 @@ export default async function UserDashboardPage() {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-bold mb-4">Mes Annonces</h2>
+                <h2 className="text-lg font-bold mb-4">Mes annonces</h2>
                 {ads.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                         Vous n'avez pas encore d'annonces.

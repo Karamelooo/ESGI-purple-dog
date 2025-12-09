@@ -19,7 +19,7 @@ export default function LoginPage() {
                 >
                     <div className="rounded-md shadow-sm -space-y-px">
                         <div className="mb-4">
-                            <label htmlFor="email-address" className="sr-only">Email address</label>
+                            <label htmlFor="email-address" className="sr-only">Adresse mail</label>
                             <input
                                 id="email-address"
                                 name="email"
@@ -27,11 +27,11 @@ export default function LoginPage() {
                                 autoComplete="email"
                                 required
                                 className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                                placeholder="Email address"
+                                placeholder="Adresse mail"
                             />
                         </div>
                         <div>
-                            <label htmlFor="password" className="sr-only">Password</label>
+                            <label htmlFor="password" className="sr-only">Mot de passe</label>
                             <input
                                 id="password"
                                 name="password"
@@ -39,7 +39,7 @@ export default function LoginPage() {
                                 autoComplete="current-password"
                                 required
                                 className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                                placeholder="Password"
+                                placeholder="Mot de passe"
                             />
                         </div>
                     </div>

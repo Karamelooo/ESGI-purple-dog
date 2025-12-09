@@ -28,10 +28,10 @@ export default async function RootLayout({
                     <a href="/admin" className="text-red-500 font-bold hover:text-red-700">Admin</a>
                   )}
                   {session.user.role === 'PRO' && (
-                    <a href="/dashboard/pro" className="font-bold hover:text-primary">Espace Pro</a>
+                    <a href="/dashboard/pro" className="font-bold hover:text-primary">Espace pro</a>
                   )}
                   {session.user.role === 'USER' && (
-                    <a href="/dashboard/user" className="font-bold hover:text-primary">Mon Espace</a>
+                    <a href="/dashboard/user" className="font-bold hover:text-primary">Mon espace</a>
                   )}
                   <span className="text-sm font-semibold hidden sm:inline">{session.user.name || session.user.email}</span>
                   <SignOutButton />
