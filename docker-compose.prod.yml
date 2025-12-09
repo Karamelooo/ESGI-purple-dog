@@ -22,7 +22,9 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-leboncoindb}
       NODE_ENV: production
       AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_TRUST_HOST: "true"
       # Add other environment variables here as needed
+
       # ports:
       #   - "3000:3000" # Traefik routes traffic internally; no host exposure needed
     labels:
