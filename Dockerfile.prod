@@ -22,9 +22,10 @@ COPY . .
 # Uncomment the following line in case you want to disable telemetry during the build.
 ENV NEXT_TELEMETRY_DISABLED 1
 
-RUN npx prisma generate
-RUN npx prisma migrate deploy
-RUN npx prisma db seed
+
+# Force Prisma 5 to avoid breaking changes in v7
+RUN npx prisma@5 generate
+RUN npx tsc prisma/seed.ts
 RUN npm run build
 
 # Production image, copy all the files and run next
@@ -51,6 +52,10 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma/seed.js ./prisma/seed.js
+
+# Install bcryptjs explicitly as it might be missing from standalone output
+RUN npm install bcryptjs
 
 USER nextjs
 
