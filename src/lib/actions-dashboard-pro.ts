@@ -1,47 +1,72 @@
-// src/lib/actions-dashboard.ts
 'use server';
 
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
-import { Prisma } from "@prisma/client"; 
-
-
-
-// 1. Définir le "Payload" (les champs inclus dans la requête)
-const bidSelectPayload = {
-    ad: {
-        select: {
-            id: true,
-            title: true,
-            price: true,
-            status: true,
-            type: true,
-            endDate: true,
-            buyerId: true, // Ajout de buyerId pour la vérification du statut 'Gagné'
-            bids: {
-                orderBy: { amount: 'desc' },
-                take: 1,
-                select: {
-                    amount: true,
-                    userId: true
-                }
-            }
-        }
-    },
-    amount: true,
-    adId: true,
-} satisfies Prisma.BidSelect;
-
-// 2. Déduire le type exact de l'élément de la liste
-type BidRecord = Prisma.BidGetPayload<{ select: typeof bidSelectPayload }>;
-
+import prisma from "@/lib/prisma"; 
 
 /**
- * Récupère toutes les annonces sur lesquelles l'utilisateur Pro connecté a enchéri.
+ * Récupère les enchères de l'utilisateur avec les détails de l'annonce.
  */
 export async function fetchUserBids() {
+   
+    const session = await auth();
+
+    if (!session?.user || !session.user.id) {
+        return { error: "Non authentifié", data: null };
+    }
+
+    const userId = Number(session.user.id);
+
+    try {
+        const bids = await prisma.bid.findMany({
+            where: { userId: userId },
+            select: {
+                ad: {
+                    select: {
+                        id: true,
+                        title: true,
+                        endDate: true,
+                        bids: {
+                            orderBy: { amount: 'desc' },
+                            take: 1,
+                        }
+                    }
+                },
+                amount: true,
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        const data = bids.map(bid => {
+            const currentPrice = bid.ad.bids[0]?.amount ?? bid.ad.id;
+            
+            let status = "En cours";
+            if (bid.ad.bids[0]?.amount === bid.amount) {
+                status = "En cours (Meilleure offre)";
+            } 
+
+            return {
+                adId: bid.ad.id,
+                title: bid.ad.title,
+                endDate: bid.ad.endDate,
+                winningBid: bid.amount,
+                currentPrice: currentPrice,
+                status: status,
+            };
+        });
+
+        return { data: data, error: null };
+
+    } catch (e) {
+        console.error("Erreur lors de la récupération des enchères:", e);
+        return { error: "Erreur serveur lors de la récupération des données.", data: null };
+    }
+}
+
+
+export async function fetchUserNotifications(limit: number = 10) {
+    // ❌ Suppression de la directive ici
+    // 'use server';
     
-    // 1. Vérification et identification de l'utilisateur
     const session = await auth();
 
     if (!session?.user || !session.user.id) {
@@ -50,47 +75,55 @@ export async function fetchUserBids() {
     
     const userId = Number(session.user.id);
 
-    // 2. Requête Prisma : Trouver les annonces liées aux bids de cet utilisateur
-    const userBids = await prisma.bid.findMany({
-        where: { userId: userId },
-        distinct: ['adId'],
-        select: bidSelectPayload, // Utilisation du payload typé
-        orderBy: {
-            createdAt: 'desc',
-        }
-    });
+    try {
+        const notifications = await prisma.notification.findMany({
+            where: { userId: userId },
+            orderBy: { createdAt: 'desc' },
+            take: limit,
+        });
 
-    // 3. Traitement des données pour la vue (Le type BidRecord est maintenant connu)
-    const processedBids = userBids.map((bidRecord: BidRecord) => { // 💡 Typage explicite ici
-        const ad = bidRecord.ad;
-        const highestBid = ad.bids[0];
-        const isWinning = ad.status === 'ACTIVE' && highestBid?.userId === userId;
-        
-        // Détermination du statut clair pour l'affichage
-        let finalStatus: string;
-        
-        if (ad.status === 'SOLD') {
-            finalStatus = ad.buyerId === userId ? 'Gagné (Achat Finalisé)' : 'Perdu (Vendu à un autre)';
-        } else if (ad.status === 'EXPIRED') {
-            finalStatus = 'Perdu (Expiré)';
-        } else if (ad.status === 'ACTIVE') {
-            finalStatus = isWinning ? 'En cours (Meilleur offre)' : 'En cours (Surenchéri)';
-        } else {
-            finalStatus = ad.status;
-        }
+        const unreadCount = await prisma.notification.count({
+            where: { userId: userId, read: false },
+        });
 
-        return {
-            adId: ad.id,
-            title: ad.title,
-            currentPrice: ad.price,
-            // Pour être précis, on prend l'enchère la plus haute de L'UTILISATEUR, 
-            // bien que dans ce cas, le 'distinct: ['adId']' nous donne l'une de ses enchères, 
-            // mais l'idée est de montrer le montant de l'enchère gagnante si c'est la sienne.
-            winningBid: highestBid?.amount, // Le montant réel de la meilleure enchère globale
-            status: finalStatus,
-            endDate: ad.endDate,
+        return { data: notifications, unreadCount: unreadCount, error: null };
+        
+    } catch (e) {
+        console.error("Erreur lors de la récupération des notifications:", e);
+        return { error: "Erreur serveur lors de la récupération des données." };
+    }
+}
+
+
+export async function markNotificationsAsRead(notificationIds: number[] | null = null) {
+    
+    const session = await auth();
+
+    if (!session?.user || !session.user.id) {
+        return { success: false, error: "Non authentifié" };
+    }
+    
+    const userId = Number(session.user.id);
+    
+    let whereCondition: any = { userId: userId, read: false };
+
+    if (notificationIds && notificationIds.length > 0) {
+        whereCondition = {
+            ...whereCondition,
+            id: { in: notificationIds },
         };
-    });
+    }
 
-    return { data: processedBids, error: null };
+    try {
+        const result = await prisma.notification.updateMany({
+            where: whereCondition,
+            data: { read: true },
+        });
+
+        return { success: true, count: result.count, error: null };
+
+    } catch (e) {
+        console.error("Erreur lors du marquage des notifications comme lues:", e);
+        return { success: false, error: "Erreur serveur lors de la mise à jour." };
+    }
 }
