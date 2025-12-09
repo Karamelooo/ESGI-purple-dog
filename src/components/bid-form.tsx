@@ -13,7 +13,7 @@ export function BidForm({ adId, currentPrice }: { adId: number, currentPrice: nu
     const requiredIncrement = getRequiredIncrement(currentPrice);
     const minBid = currentPrice + requiredIncrement;
 
-    /
+    
     const [state, formAction, isPending] = useActionState(placeBid, null); 
 
     return (
