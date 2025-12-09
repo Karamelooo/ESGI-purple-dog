@@ -28,6 +28,7 @@ enum AdType {
   SALE
 }
 
+
 model User {
   id            Int            @id @default(autoincrement())
   email         String         @unique
@@ -35,6 +36,7 @@ model User {
   password      String
   role          Role           @default(USER)
   createdAt     DateTime       @default(now())
+  isBlocked     Boolean        @default(false)
   
   // Profile fields
   photoUrl      String?
@@ -49,12 +51,16 @@ model User {
   bids          Bid[]
   notifications Notification[]
   purchases     Ad[]           @relation("BuyerAds")
+  reviewsWritten Review[]      @relation("ReviewsWritten")
+  reviewsReceived Review[]     @relation("ReviewsReceived")
 }
 
 model Category {
   id    Int    @id @default(autoincrement())
   name  String @unique
   slug  String @unique
+  commissionRateBuyer Float?
+  commissionRateSeller Float?
   ads   Ad[]
 }
 
@@ -97,6 +103,8 @@ model Ad {
   buyer       User?     @relation("BuyerAds", fields: [buyerId], references: [id])
   
   bids        Bid[]
+  transactions Transaction[]
+  delivery    Delivery?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -128,5 +136,53 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id])
   
   createdAt DateTime @default(now())
+}
+
+model GlobalSettings {
+  id                    Int      @id @default(autoincrement())
+  commissionRateBuyer   Float    @default(0.0)
+  commissionRateSeller  Float    @default(0.0)
+  updatedAt             DateTime @updatedAt
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String?
+  
+  authorId  Int
+  author    User     @relation("ReviewsWritten", fields: [authorId], references: [id])
+  
+  targetId  Int
+  target    User     @relation("ReviewsReceived", fields: [targetId], references: [id])
+  
+  createdAt DateTime @default(now())
+}
+
+model Transaction {
+  id               Int      @id @default(autoincrement())
+  amount           Float
+  commissionAmount Float
+  type             String   // "PAYMENT", "REFUND", "PAYOUT"
+  status           String   // "PENDING", "COMPLETED", "FAILED"
+  stripePaymentId  String?
+  
+  adId             Int
+  ad               Ad       @relation(fields: [adId], references: [id])
+  
+  createdAt        DateTime @default(now())
+}
+
+model Delivery {
+  id             Int      @id @default(autoincrement())
+  status         String   // "PENDING", "SHIPPED", "DELIVERED"
+  trackingNumber String?
+  carrier        String?
+  
+  adId           Int      @unique
+  ad             Ad       @relation(fields: [adId], references: [id])
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
