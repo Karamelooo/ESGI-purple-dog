@@ -33,7 +33,7 @@ services:
       - "traefik.http.routers.hackathon2-app.entrypoints=websecure"
       - "traefik.http.routers.hackathon2-app.tls.certresolver=letsencrypt"
       - "traefik.http.services.hackathon2-app.loadbalancer.server.port=3000"
-    command: sh -c "npx prisma migrate deploy && node server.js"
+    command: sh -c "npx prisma@5 migrate deploy && node prisma/seed.js && node server.js"
     depends_on:
       - postgres
     networks:
