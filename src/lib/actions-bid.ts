@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 
 import { getRequiredIncrement } from "@/lib/actions-rules"; 
 
-
+//notif des ebchères en temps réel
 async function createNotification(userId: number, message: string, link: string) {
     if (!userId) return;
 
@@ -193,5 +193,83 @@ export async function buyNow(adId: number) {
 
     revalidatePath(`/ad/${adId}`);
     return { message: "Achat confirmé !" };
+}
+
+
+//notif de cloture des enchères expirées
+export async function closeExpiredAuctions() {
+    console.log("Démarrage de la tâche de clôture des enchères expirées...");
+    
+    // 1. Trouver toutes les annonces actives de type AUCTION dont la date de fin est passée
+    const expiredAds = await prisma.ad.findMany({
+        where: {
+            type: 'AUCTION',
+            status: 'ACTIVE',
+            endDate: {
+                lt: new Date(), 
+            },
+        },
+        include: {
+            // Récupérer la meilleure enchère s'il y en a une
+            bids: {
+                orderBy: { amount: 'desc' },
+                take: 1,
+            },
+            user: true, // Le vendeur (user)
+        },
+    });
+
+    if (expiredAds.length === 0) {
+        console.log("Aucune enchère expirée trouvée.");
+        return { success: true, message: "Aucune enchère à clôturer." };
+    }
+
+    console.log(`Clôture de ${expiredAds.length} enchère(s)...`);
+
+    for (const ad of expiredAds) {
+        const winningBid = ad.bids[0]; // La meilleure enchère, ou undefined
+        const adLink = `/ad/${ad.id}`;
+
+        if (winningBid) {
+            // 2. CAS 1: GAGNANT TROUVÉ (SOLD)
+            const winnerId = winningBid.userId;
+
+            // Mise à jour de l'annonce
+            await prisma.ad.update({
+                where: { id: ad.id },
+                data: {
+                    status: 'SOLD',
+                    buyerId: winnerId, // Attribuer l'acheteur
+                },
+            });
+
+            // 💡 NOTIFICATION DE FIN D'ENCHÈRE (Gagnant)
+            const winnerMessage = `🥳 Félicitations ! Vous avez remporté l'enchère pour "${ad.title}" au prix de ${winningBid.amount} €.`;
+            await createNotification(winnerId, winnerMessage, adLink);
+
+            // 💡 NOTIFICATION DE FIN D'ENCHÈRE (Vendeur - Vendu)
+            const sellerMessage = `✅ Votre annonce "${ad.title}" a été clôturée et vendue à ${winningBid.amount} €.`;
+            await createNotification(ad.userId, sellerMessage, adLink);
+
+            revalidatePath(adLink);
+
+        } else {
+            // 3. CAS 2: AUCUNE ENCHÈRE PLACÉE (EXPIRED)
+            await prisma.ad.update({
+                where: { id: ad.id },
+                data: {
+                    status: 'EXPIRED', // L'annonce n'a pas trouvé preneur
+                },
+            });
+
+            // 💡 NOTIFICATION DE FIN D'ENCHÈRE (Vendeur - Expiré)
+            const sellerMessage = `❌ Votre annonce "${ad.title}" est expirée sans aucune offre.`;
+            await createNotification(ad.userId, sellerMessage, adLink);
+            
+            revalidatePath(adLink);
+        }
+    }
+
+    return { success: true, message: `${expiredAds.length} enchère(s) clôturée(s) avec succès.` };
 }
 
