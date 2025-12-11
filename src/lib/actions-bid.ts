@@ -174,6 +174,10 @@ export async function buyNow(adId: number) {
             if (ad.type !== 'SALE') throw new Error("Pas en vente directe.");
             if (ad.status !== 'ACTIVE' && ad.status !== 'PENDING') throw new Error("Non disponible.");
             
+            // Verify user exists to prevent FK error (stale session)
+            const userExists = await tx.user.findUnique({ where: { id: userId } });
+            if (!userExists) throw new Error("Utilisateur introuvable. Veuillez vous reconnecter.");
+            
             // Reservation check
             if (ad.reservedUntil && ad.reservedUntil > now && ad.reservedById !== userId) {
                 throw new Error("Cet article est réservé par un autre utilisateur.");
