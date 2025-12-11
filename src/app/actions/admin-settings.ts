@@ -87,3 +87,44 @@ export async function deleteCategory(id: number) {
         return { error: "Failed to delete category" };
     }
 }
+
+export async function updateCategoryFormConfig(id: number, formConfig: any[]) {
+    const session = await auth();
+    console.log("updateCategoryFormConfig called with:", { id, formConfig });
+
+    if (session?.user?.role !== 'ADMIN') {
+        console.log("Unauthorized access attempt");
+        return { error: "Unauthorized" };
+    }
+
+    try {
+        const result = await prisma.category.update({
+            where: { id },
+            data: { formConfig }
+        });
+        console.log("Category updated successfully:", result.id);
+        revalidatePath('/admin/categories');
+        revalidatePath('/deposer-une-annonce');
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update form config:", error);
+        return { error: "Failed to update form config: " + (error as Error).message };
+    }
+}
+
+export async function getCategoryById(id: number) {
+    const session = await auth();
+    // Allow read access to anyone? Or just admin? For builder, admin checks.
+    // For public form, we might need public access, but that's usually via getCategories.
+    // Let's secure it for now.
+    if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" };
+
+    try {
+        const category = await prisma.category.findUnique({
+            where: { id }
+        });
+        return { category };
+    } catch (error) {
+        return { error: "Not found" };
+    }
+}

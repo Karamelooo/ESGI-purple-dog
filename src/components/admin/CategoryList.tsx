@@ -4,7 +4,8 @@ import { useState } from "react";
 import { createCategory, updateCategory, deleteCategory } from "@/app/actions/admin-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Pencil, Trash2, X, Save } from "lucide-react";
+import Link from "next/link";
+import { Plus, Pencil, Trash2, X, Save, Settings } from "lucide-react";
 
 export default function CategoryList({ categories }: { categories: any[] }) {
     const [isCreating, setIsCreating] = useState(false);
@@ -112,6 +113,11 @@ export default function CategoryList({ categories }: { categories: any[] }) {
                                         <td className="p-2 text-right">
                                             <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-600" onClick={() => handleEdit(cat)}><Pencil size={16} /></Button>
+                                                <Link href={`/admin/categories/${cat.id}/form`}>
+                                                    <Button size="icon" variant="ghost" className="h-8 w-8 text-purple-600" title="Configurer formulaire">
+                                                        <Settings size={16} />
+                                                    </Button>
+                                                </Link>
                                                 <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600" onClick={() => handleDelete(cat.id)}><Trash2 size={16} /></Button>
                                             </div>
                                         </td>

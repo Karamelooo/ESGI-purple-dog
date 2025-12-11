@@ -61,6 +61,7 @@ model Category {
   slug  String @unique
   commissionRateBuyer Float?
   commissionRateSeller Float?
+  formConfig Json?      // Array of field definitions { label, type, required, options }
   ads   Ad[]
 }
 
@@ -96,6 +97,9 @@ model Ad {
   categoryId  Int
   category    Category  @relation(fields: [categoryId], references: [id])
   
+  // Custom Attributes
+  customAttributes Json?
+
   userId      Int
   user        User      @relation(fields: [userId], references: [id])
   
