@@ -27,7 +27,7 @@ export default async function DashboardLayout({
             <div className="flex flex-col">
               <h2 className="font-bold text-lg mb-0">{session.user.name}</h2>
               <p className="text-sm text-gray-500">
-                {isPro ? "Compte Professionnel" : "Compte Particulier"}
+                {isPro ? "Compte professionnel" : "Compte particulier"}
               </p>
             </div>
 
@@ -46,29 +46,15 @@ export default async function DashboardLayout({
                 Vue d'ensemble
               </Button>
             </Link>
-            <Link href="/dashboard/ads">
+            <Link href={`/dashboard/${isPro ? "pro" : "user"}/ads`}>
               <Button variant="ghost" className="w-full justify-start">
-                Mes Annonces
+                Mes annonces
               </Button>
             </Link>
-            <Link href="/dashboard/purchases">
+            {/* Rappel : Lien conservé en /bi comme demandé */}
+            <Link href={`/dashboard/${isPro ? "pro" : "user"}/bi`}>
               <Button variant="ghost" className="w-full justify-start">
-                {isPro ? "Mes Achats & Enchères" : "Mes Achats"}
-              </Button>
-            </Link>
-            <Link href="/dashboard/favorites">
-              <Button variant="ghost" className="w-full justify-start">
-                Favoris
-              </Button>
-            </Link>
-            <Link href="/dashboard/payment">
-              <Button variant="ghost" className="w-full justify-start">
-                Moyens de paiement
-              </Button>
-            </Link>
-            <Link href="/dashboard/profile">
-              <Button variant="ghost" className="w-full justify-start">
-                Mon Profil
+                {isPro ? "Mes achats et enchères" : "Mes achats"}
               </Button>
             </Link>
             <Link href="/deposer-une-annonce">

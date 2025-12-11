@@ -1,7 +1,7 @@
 export default function LegalPage() {
     return (
         <div className="container mx-auto px-4 py-12 max-w-4xl">
-            <h1 className="text-4xl font-bold mb-8 text-gray-900">Mentions Légales</h1>
+            <h1 className="text-4xl font-bold mb-8 text-gray-900">Mentions légales</h1>
 
             <div className="prose prose-purple max-w-none space-y-8">
                 <section>
@@ -29,7 +29,7 @@ export default function LegalPage() {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4">4. Vente et Enchères</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4">4. Vente et enchères</h2>
                     <p>
                         Purple Dog agit en tant que tiers de confiance. Les ventes sont régies par nos Conditions Générales de Vente (CGV).
                         Les enchères sont soumises à une vérification stricte de l'identité des acheteurs professionnels.

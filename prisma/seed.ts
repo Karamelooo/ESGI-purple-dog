@@ -13,17 +13,17 @@ async function main() {
 
     // 1. Create Categories
     const categoriesData = [
-        { name: 'Bijoux & Montres', slug: 'bijoux-montres' },
-        { name: 'Meubles Anciens', slug: 'meubles-anciens' },
-        { name: 'Art & Tableaux', slug: 'art-tableaux' },
+        { name: 'Bijoux et montres', slug: 'bijoux-montres' },
+        { name: 'Meubles anciens', slug: 'meubles-anciens' },
+        { name: 'Art et tableaux', slug: 'art-tableaux' },
         { name: 'Collection', slug: 'collection' },
-        { name: 'Vins & Spiritueux', slug: 'vins-spiritueux' },
-        { name: 'Instruments de Musique', slug: 'instruments-musique' },
-        { name: 'Livres Anciens', slug: 'livres-anciens' },
-        { name: 'Mode & Luxe', slug: 'mode-luxe' },
+        { name: 'Vins et spiritueux', slug: 'vins-spiritueux' },
+        { name: 'Instruments de musique', slug: 'instruments-musique' },
+        { name: 'Livres anciens', slug: 'livres-anciens' },
+        { name: 'Mode et luxe', slug: 'mode-luxe' },
         { name: 'Horlogerie', slug: 'horlogerie' },
         { name: 'Photographie', slug: 'photographie' },
-        { name: 'Vaisselle & Argenterie', slug: 'vaisselle-argenterie' },
+        { name: 'Vaisselle et argenterie', slug: 'vaisselle-argenterie' },
         { name: 'Sculptures', slug: 'sculptures' },
         { name: 'Véhicules', slug: 'vehicules' },
     ]
