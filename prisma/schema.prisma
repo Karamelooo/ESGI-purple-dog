@@ -167,7 +167,7 @@ model Transaction {
   id               Int      @id @default(autoincrement())
   amount           Float
   commissionAmount Float
-  type             String   // "PAYMENT", "REFUND", "PAYOUT"
+  type             String   // "PAIEMENT", "REMBOURSEMENT", "VIREMENT"
   status           String   // "PENDING", "COMPLETED", "FAILED"
   stripePaymentId  String?
   
