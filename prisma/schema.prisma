@@ -44,11 +44,14 @@ model User {
   siret         String?
   specialties   String?        // JSON or comma-separated
   
+  stripeCustomerId String?
+  
   // Relations
   ads           Ad[]
   bids          Bid[]
   notifications Notification[]
   purchases     Ad[]           @relation("BuyerAds")
+  reservedAds   Ad[]           @relation("ReservedAds")
 }
 
 model Category {
@@ -95,6 +98,11 @@ model Ad {
   
   buyerId     Int?
   buyer       User?     @relation("BuyerAds", fields: [buyerId], references: [id])
+  
+  // Cart Reservation
+  reservedUntil DateTime?
+  reservedById  Int?
+  reservedBy    User?     @relation("ReservedAds", fields: [reservedById], references: [id])
   
   bids        Bid[]
 

@@ -1,24 +1,70 @@
-'use client'
+"use client";
 
-import { useActionState } from 'react'
-import { buyNow } from '@/lib/actions-bid'
-import { Button } from '@/components/ui/button'
+import { useActionState, useEffect } from "react";
+import { buyNow } from "@/lib/actions-bid";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
-export function BuyButton({ adId, price }: { adId: number, price: number }) {
-    const actionWithId = buyNow.bind(null, adId);
-    // @ts-ignore
-    const [state, formAction, isPending] = useActionState(actionWithId, null);
+export function BuyButton({
+  adId,
+  price,
+  reservedUntil,
+  reservedById,
+  currentUserId,
+}: {
+  adId: number;
+  price: number;
+  reservedUntil?: Date | null;
+  reservedById?: number | null;
+  currentUserId?: number;
+}) {
+  const actionWithId = buyNow.bind(null, adId);
 
+  const [state, formAction, isPending] = useActionState(actionWithId, null);
+
+  useEffect(() => {
+    if (state?.message) {
+      if (
+        state.message.includes("confirmé") ||
+        state.message.toLowerCase().includes("ajouté")
+      ) {
+        toast.success(state.message);
+      } else {
+        toast.error(state.message);
+      }
+    }
+  }, [state]);
+
+  const isReservedByOther =
+    reservedUntil &&
+    new Date(reservedUntil) > new Date() &&
+    reservedById !== currentUserId;
+  // If reserved by ME, show "Already in cart/Pay now" logic? For now, we keep it simple or just regular button but it might re-trigger "Already reserved" error which is handled.
+  // Actually, if reserved by ME, maybe disable "Buy Now" (Add to cart) to avoid confusion?
+  // The prompt asked for "button grisé en disant qu'il n'est pas disponible" for OTHER users.
+
+  if (isReservedByOther) {
     return (
-        <form action={formAction} className="mt-6">
-            <Button type="submit" disabled={isPending} className="w-full text-lg py-6 bg-green-600 hover:bg-green-700 font-bold">
-                {isPending ? 'Traitement...' : `Acheter maintenant (${price} €)`}
-            </Button>
-            {state?.message && (
-                <p className={`text-sm font-bold mt-2 text-center ${state.message.includes('confirmé') ? 'text-green-600' : 'text-red-600'}`}>
-                    {state.message}
-                </p>
-            )}
-        </form>
-    )
+      <div className="mt-6">
+        <Button
+          disabled
+          className="w-full text-lg py-6 bg-gray-400 font-bold cursor-not-allowed"
+        >
+          Indisponible (Réservé)
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <form action={formAction} className="mt-6">
+      <Button
+        type="submit"
+        disabled={isPending}
+        className="w-full text-lg py-6 bg-green-600 hover:bg-green-700 font-bold"
+      >
+        {isPending ? "Traitement..." : `Acheter maintenant (${price} €)`}
+      </Button>
+    </form>
+  );
 }

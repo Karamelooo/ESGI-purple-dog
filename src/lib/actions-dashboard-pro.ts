@@ -1,7 +1,8 @@
 'use server';
 
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma"; 
+import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client"; 
 
 /**
  * Récupère les enchères de l'utilisateur avec les détails de l'annonce.
@@ -105,7 +106,7 @@ export async function markNotificationsAsRead(notificationIds: number[] | null =
     
     const userId = Number(session.user.id);
     
-    let whereCondition: any = { userId: userId, read: false };
+    let whereCondition: Prisma.NotificationWhereInput = { userId: userId, read: false };
 
     if (notificationIds && notificationIds.length > 0) {
         whereCondition = {

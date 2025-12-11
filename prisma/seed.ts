@@ -58,7 +58,7 @@ async function main() {
             companyName: 'Galerie JP',
             siret: '12345678900019',
             specialties: 'Tableaux, Art déco',
-            // photoUrl: '...'
+
         }
     })
 
@@ -69,7 +69,7 @@ async function main() {
             name: 'Johnny Hallyday',
             password,
             role: Role.USER,
-            // age check implied
+
         }
     })
 
@@ -108,7 +108,26 @@ async function main() {
         }
     })
 
-    console.log({ admin, proUser, individualUser, auctionAd, saleAd })
+    // Reserved Ad (in cart)
+    const reservedAd = await prisma.ad.create({
+        data: {
+            title: 'Vase Ming Rare',
+            description: 'Vase authentique, réservé pour achat.',
+            type: AdType.SALE,
+            status: 'ACTIVE', // Still active but reserved
+            price: 2500,
+            dimensions: '20x20x40cm',
+            weight: 1.2,
+            userId: proUser.id,
+            categoryId: allCats.find(c => c.slug === 'collection')?.id || allCats[0].id,
+            reservedById: individualUser.id,
+            reservedUntil: new Date(Date.now() + 10 * 60 * 1000), // Reserved for 10 mins
+        }
+    })
+
+
+
+    console.log({ admin, proUser, individualUser, auctionAd, saleAd, reservedAd })
 }
 
 main()
