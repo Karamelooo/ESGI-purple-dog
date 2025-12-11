@@ -190,3 +190,14 @@ model Delivery {
   updatedAt      DateTime @updatedAt
 }
 
+
+model DeliveryPlatform {
+  id        Int      @id @default(autoincrement())
+  name      String   // Display name (e.g. "DHL Express")
+  slug      String   @unique // Internal ID (e.g. "dhl", "convelio")
+  isActive  Boolean  @default(false)
+  config    Json?    // Encrypted/Stored credentials { apiKey, secret, ... }
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { auth } from "@/auth";
 import { SignInButton, SignOutButton } from '@/components/auth-buttons';
+import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
   title: 'Purple Dog',
@@ -50,6 +51,7 @@ export default async function RootLayout({
         <main>
           {children}
         </main>
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   )
