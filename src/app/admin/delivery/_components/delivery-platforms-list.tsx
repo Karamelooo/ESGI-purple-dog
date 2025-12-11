@@ -117,7 +117,7 @@ export function DeliveryPlatformsList({ platforms }: DeliveryPlatformsListProps)
                                 onClick={() => handleOpenConfig(provider)}
                             >
                                 <Settings size={16} />
-                                {isConfigured ? "Modifier la configuration" : "Configurer & Activer"}
+                                {isConfigured ? "Modifier la configuration" : "Configurer et activer"}
                             </Button>
                         </CardFooter>
                     </Card>

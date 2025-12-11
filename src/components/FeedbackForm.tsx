@@ -138,7 +138,7 @@ export default function FeedbackForm() {
                 <NpsRating currentNps={npsScore} setCurrentNps={setNpsScore} />
 
                 <div className="space-y-2">
-                    <label htmlFor="comment" className="font-medium text-gray-700">Commentaires et Suggestions (Optionnel) :</label>
+                    <label htmlFor="comment" className="font-medium text-gray-700">Commentaires et suggestions (optionnel) :</label>
                     <textarea
                         id="comment"
                         name="comment"
