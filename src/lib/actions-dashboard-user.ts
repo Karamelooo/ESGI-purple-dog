@@ -19,6 +19,7 @@ interface AdQueryResult {
     status: 'DRAFT' | 'PENDING' | 'ACTIVE' | 'REJECTED' | 'SOLD' | 'EXPIRED';
     createdAt: Date;
     endDate: Date | null;
+    images?: string[];
 }
 
 interface PurchaseQueryResult {
@@ -103,6 +104,7 @@ export async function fetchUserAds() {
                 status: true, 
                 createdAt: true,
                 endDate: true, 
+                images: true,
             },
             orderBy: { createdAt: 'desc' },
         }) as AdQueryResult[]; // Cast for type safety
@@ -113,6 +115,7 @@ export async function fetchUserAds() {
                 ? 'Terminé (Non Clôturé)'
                 : ad.status,
             displayPrice: ad.price?.toFixed(2) ?? 'N/A',
+            thumbnail: ad.images && ad.images.length > 0 ? ad.images[0] : null,
         }));
 
         return { data: data, error: null };

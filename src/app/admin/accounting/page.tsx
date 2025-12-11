@@ -22,13 +22,13 @@ export default async function AdminAccountingPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">
-          Comptabilité & Commissions
+          Comptabilité et commissions
         </h1>
         <div className="flex items-center gap-4">
           <AccountingExportButton transactions={transactions} />
           <div className="bg-green-50 px-4 py-2 rounded-lg border border-green-100">
             <span className="text-gray-600 text-sm mr-2">
-              Total Commissions:
+              Total commissions :
             </span>
             <span className="text-green-700 font-bold text-lg">
               {totalCommission.toFixed(2)} €

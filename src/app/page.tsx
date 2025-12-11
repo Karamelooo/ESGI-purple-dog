@@ -41,38 +41,46 @@ export default async function Home() {
           Dernières Annonces
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-          {latestAds.map((ad) => (
-            <Link key={ad.id} href={`/ad/${ad.id}`}>
-              <div className="group cursor-pointer">
-                <div className="bg-gray-200 rounded-xl aspect-square mb-4 overflow-hidden relative">
-                  <img
-                    src={`https://placehold.co/400x400?text=${encodeURIComponent(
-                      ad.title
-                    )}`}
-                    alt={ad.title}
-                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                  />
-                  {ad.status === "SOLD" && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center font-bold text-white uppercase tracking-widest">
-                      VENDU
-                    </div>
-                  )}
-                  {ad.status !== "SOLD" &&
-                    ad.reservedUntil &&
-                    new Date(ad.reservedUntil) > new Date() && (
-                      <div className="absolute inset-0 bg-orange-500/50 flex items-center justify-center font-bold text-white uppercase tracking-widest">
-                        EN PANIER
+          {latestAds.map((ad) => {
+            const image =
+              ad.images && ad.images.length > 0
+                ? ad.images[0]
+                : `https://placehold.co/400x400?text=${encodeURIComponent(
+                    ad.title
+                  )}`;
+
+            return (
+              <Link key={ad.id} href={`/ad/${ad.id}`}>
+                <div className="group cursor-pointer">
+                  <div className="bg-gray-200 rounded-xl aspect-square mb-4 overflow-hidden relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={image}
+                      alt={ad.title}
+                      className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {ad.status === "SOLD" && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center font-bold text-white uppercase tracking-widest">
+                        VENDU
                       </div>
                     )}
+                    {ad.status !== "SOLD" &&
+                      ad.reservedUntil &&
+                      new Date(ad.reservedUntil) > new Date() && (
+                        <div className="absolute inset-0 bg-orange-500/50 flex items-center justify-center font-bold text-white uppercase tracking-widest">
+                          EN PANIER
+                        </div>
+                      )}
+                  </div>
+                  <h3 className="font-bold text-lg truncate">{ad.title}</h3>
+                  <p className="text-purple-700 font-bold">{ad.price ?? 0} €</p>
+                  <p className="text-xs text-gray-500 uppercase">
+                    {ad.type === "AUCTION" ? "Enchère" : "Vente directe"}
+                  </p>
                 </div>
-                <h3 className="font-bold text-lg truncate">{ad.title}</h3>
-                <p className="text-purple-700 font-bold">{ad.price ?? 0} €</p>
-                <p className="text-xs text-gray-500 uppercase">
-                  {ad.type === "AUCTION" ? "Enchère" : "Vente directe"}
-                </p>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
           {latestAds.length === 0 && (
             <div className="col-span-full text-center py-12 text-gray-500">
               Aucune annonce pour le moment. Soyez le premier !
@@ -136,16 +144,6 @@ export default async function Home() {
           <p className="mb-8 text-purple-200">
             Recevez les dernières tendances et objets d&apos;exception.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="email"
-              placeholder="Votre email"
-              className="flex-1 px-4 py-3 rounded-lg text-gray-900 focus:outline-none"
-            />
-            <Button size="lg" variant="secondary" className="font-bold">
-              S&apos;inscrire
-            </Button>
-          </div>
         </div>
       </section>
 

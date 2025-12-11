@@ -18,6 +18,8 @@ const AdSchema = z.object({
     // Auction specific
     minPrice: z.coerce.number().optional(),
     endDate: z.string().optional(),
+    // Media
+    images: z.string().optional(),
 });
 
 export async function createAd(prevState: unknown, formData: FormData) {
@@ -31,7 +33,13 @@ export async function createAd(prevState: unknown, formData: FormData) {
         return { message: "Données invalides: " + JSON.stringify(parsed.error.flatten()) };
     }
 
-    const { title, description, categoryId, price, type, weight, dimensions, minPrice, endDate } = parsed.data;
+    const { title, description, categoryId, price, type, weight, dimensions, minPrice, endDate, images } = parsed.data;
+
+    // Parse images (URLs separated by comma or newline)
+    const imageUrls = (images || '')
+        .split(/[\n,]/)
+        .map((url) => url.trim())
+        .filter((url) => url.length > 0);
 
     // AI Content Check (Mock or Real)
     // const isSafe = await checkContentSafety(title, description);
@@ -69,6 +77,8 @@ export async function createAd(prevState: unknown, formData: FormData) {
                 endDate: finalEndDate,
                 startDate: new Date(),
                 customAttributes,
+                images: imageUrls,
+                documents: [],
             }
         });
     } catch (e: unknown) {

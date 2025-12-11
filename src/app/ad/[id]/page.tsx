@@ -37,21 +37,41 @@ export default async function AdPage({ params }: { params: { id: string } }) {
   const isPro = session?.user?.role === "PRO";
   const isOwner = session?.user?.id === ad.user.id.toString();
   const currentUserId = session?.user ? parseInt(session.user.id!) : undefined;
+  const images = ad.images && ad.images.length > 0 ? ad.images : [];
+  const mainImage =
+    images[0] ||
+    `https://placehold.co/600x600?text=${encodeURIComponent(ad.title)}`;
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-        {/* Images Section (Mock) */}
+        {/* Images Section */}
         <div className="space-y-4">
           <div className="bg-gray-100 rounded-xl aspect-square flex items-center justify-center overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={`https://placehold.co/600x600?text=${encodeURIComponent(
-                ad.title
-              )}`}
+              src={mainImage}
               alt={ad.title}
               className="w-full h-full object-cover"
             />
           </div>
+          {images.length > 1 && (
+            <div className="grid grid-cols-4 gap-3">
+              {images.slice(1).map((url) => (
+                <div
+                  key={url}
+                  className="aspect-square overflow-hidden rounded-lg border bg-gray-50"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt="Miniature"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Details Section */}
