@@ -35,6 +35,25 @@ export default async function DashboardLayout({
     </Link>
   ) : null;
 
+  <Link href={`dashboard/profile`}>
+    <Button
+      variant="ghost"
+      className="w-full justify-start text-indigo-600 hover:text-indigo-700"
+    >
+      Mon profil et sécurité
+    </Button>
+  </Link>;
+
+  {
+    /* ⭐️ LIEN FEEDBACK RÉTATABLI ICI ⭐️ */
+  }
+  {
+    feedbackLink;
+  }
+  {
+    /* ------------------------------------------- */
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
       <aside className="w-full md:w-64 shrink-0">
@@ -91,19 +110,6 @@ export default async function DashboardLayout({
                 Moyens de paiement
               </Button>
             </Link>
-
-            {/* Mon Profil & Sécurité */}
-            <Link href={`${basePath}/profile`}>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-indigo-600 hover:text-indigo-700"
-              >
-                Mon Profil & Sécurité
-              </Button>
-            </Link>
-
-            {/* Lien de feedback */}
-            {feedbackLink}
 
             {/* Déposer une annonce */}
             <Link href="/deposer-une-annonce">
