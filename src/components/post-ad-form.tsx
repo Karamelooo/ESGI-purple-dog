@@ -81,7 +81,6 @@ export function PostAdForm({ categories }: { categories: Category[] }) {
             </div>
           </div>
 
-<<<<<<< HEAD
           {/* Basic Info */}
           <div className="space-y-2">
             <Label>Titre</Label>
@@ -93,19 +92,6 @@ export function PostAdForm({ categories }: { categories: Category[] }) {
               onChange={(e) => setTitle(e.target.value)}
             />
           </div>
-=======
-                    {/* Basic Info */}
-                    <div className="space-y-2">
-                        <Label>Titre</Label>
-                        <Input
-                            name="title"
-                            required
-                            placeholder="Ancien vase Ming..."
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                        />
-                    </div>
->>>>>>> origin
 
           <div className="space-y-2">
             <Label>Description</Label>
