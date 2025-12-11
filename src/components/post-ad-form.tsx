@@ -17,10 +17,48 @@ export function PostAdForm({ categories }: { categories: any[] }) {
     const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
     const [estimate, setEstimate] = useState<string | null>(null);
     const [isEstimating, setIsEstimating] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [uploadError, setUploadError] = useState<string | null>(null);
 
     // Local state for estimate inputs
     const [title, setTitle] = useState('');
     const [desc, setDesc] = useState('');
+    const [imageInput, setImageInput] = useState('');
+
+    const parsedImages = imageInput
+        .split(/[\n,]/)
+        .map((url) => url.trim())
+        .filter((url) => url.length > 0);
+
+    const handleFilesUpload = async (files: FileList | null) => {
+        if (!files || files.length === 0) return;
+        setUploading(true);
+        setUploadError(null);
+        try {
+            const uploaded: string[] = [];
+            for (const file of Array.from(files)) {
+                const fd = new FormData();
+                fd.append("file", file);
+                const res = await fetch("/api/upload", {
+                    method: "POST",
+                    body: fd,
+                });
+                if (!res.ok) {
+                    throw new Error("Upload échoué");
+                }
+                const data = await res.json();
+                if (data.url) {
+                    uploaded.push(data.url as string);
+                }
+            }
+            const newList = [...parsedImages, ...uploaded];
+            setImageInput(newList.join('\n'));
+        } catch (err) {
+            setUploadError("Erreur lors de l'upload des images. Réessayez.");
+        } finally {
+            setUploading(false);
+        }
+    };
 
     const selectedCategory = categories.find(c => c.id.toString() === selectedCategoryId);
     const formConfig = (selectedCategory?.formConfig as any[]) || [];
@@ -97,6 +135,47 @@ export function PostAdForm({ categories }: { categories: any[] }) {
                             value={desc}
                             onChange={(e) => setDesc(e.target.value)}
                         />
+                    </div>
+
+                    {/* Images */}
+                    <div className="space-y-2">
+                        <Label>Images (URLs)</Label>
+                        <Textarea
+                            name="images"
+                            placeholder="https://exemple.com/photo1.jpg&#10;https://exemple.com/photo2.jpg"
+                            value={imageInput}
+                            onChange={(e) => setImageInput(e.target.value)}
+                            className="min-h-[80px]"
+                        />
+                        <p className="text-xs text-gray-500">Collez une ou plusieurs URLs d'images (séparées par retour à la ligne ou virgule). Première image utilisée comme vignette.</p>
+
+                        <div className="flex flex-col gap-2">
+                            <Label className="text-sm text-gray-700">Ou importez des fichiers</Label>
+                            <Input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={(e) => handleFilesUpload(e.target.files)}
+                                disabled={uploading}
+                            />
+                            {uploading && (
+                                <p className="text-xs text-purple-700 flex items-center gap-2">
+                                    <Loader2 className="h-4 w-4 animate-spin" /> Upload en cours...
+                                </p>
+                            )}
+                            {uploadError && <p className="text-xs text-red-600">{uploadError}</p>}
+                        </div>
+
+                        {parsedImages.length > 0 && (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                {parsedImages.map((url) => (
+                                    <div key={url} className="aspect-square overflow-hidden rounded-lg border bg-gray-50">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={url} alt="Prévisualisation" className="w-full h-full object-cover" />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* AI Estimate Button */}

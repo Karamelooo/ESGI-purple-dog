@@ -35,25 +35,32 @@ export default async function Home() {
       <div className="container mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Dernières annonces</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-          {latestAds.map((ad) => (
-            <Link key={ad.id} href={`/ad/${ad.id}`}>
-              <div className="group cursor-pointer">
-                <div className="bg-gray-200 rounded-xl aspect-square mb-4 overflow-hidden relative">
-                  <img
-                    src={`https://placehold.co/400x400?text=${encodeURIComponent(ad.title)}`}
-                    alt={ad.title}
-                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                  />
-                  {ad.status === 'SOLD' && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center font-bold text-white uppercase tracking-widest">VENDU</div>
-                  )}
+          {latestAds.map((ad) => {
+            const image = ad.images && ad.images.length > 0
+              ? ad.images[0]
+              : `https://placehold.co/400x400?text=${encodeURIComponent(ad.title)}`;
+
+            return (
+              <Link key={ad.id} href={`/ad/${ad.id}`}>
+                <div className="group cursor-pointer">
+                  <div className="bg-gray-200 rounded-xl aspect-square mb-4 overflow-hidden relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={image}
+                      alt={ad.title}
+                      className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {ad.status === 'SOLD' && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center font-bold text-white uppercase tracking-widest">VENDU</div>
+                    )}
+                  </div>
+                  <h3 className="font-bold text-lg truncate">{ad.title}</h3>
+                  <p className="text-purple-700 font-bold">{ad.price ?? 0} €</p>
+                  <p className="text-xs text-gray-500 uppercase">{ad.type === 'AUCTION' ? 'Enchère' : 'Vente directe'}</p>
                 </div>
-                <h3 className="font-bold text-lg truncate">{ad.title}</h3>
-                <p className="text-purple-700 font-bold">{ad.price ?? 0} €</p>
-                <p className="text-xs text-gray-500 uppercase">{ad.type === 'AUCTION' ? 'Enchère' : 'Vente directe'}</p>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
           {latestAds.length === 0 && (
             <div className="col-span-full text-center py-12 text-gray-500">
               Aucune annonce pour le moment. Soyez le premier !

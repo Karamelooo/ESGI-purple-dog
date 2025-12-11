@@ -66,6 +66,7 @@ export default async function UserAdsPage() {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Image</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Titre</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Prix</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
@@ -77,6 +78,16 @@ export default async function UserAdsPage() {
                             <tbody className="bg-white divide-y divide-gray-100">
                                 {ads.map((ad) => (
                                     <tr key={ad.id} className="hover:bg-gray-50">
+                                        <td className="px-4 py-2">
+                                            <div className="h-12 w-12 rounded-lg overflow-hidden bg-gray-100 border">
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img
+                                                    src={ad.thumbnail || `https://placehold.co/100x100?text=${encodeURIComponent(ad.title)}`}
+                                                    alt={ad.title}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            </div>
+                                        </td>
                                         <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
                                             {ad.title}
                                         </td>
@@ -84,7 +95,7 @@ export default async function UserAdsPage() {
                                             {ad.displayPrice} €
                                         </td>
                                         <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                                            {ad.type === 'AUCTION' ? 'Enchère' : 'Vente Directe'}
+                                            {ad.type === 'AUCTION' ? 'Enchère' : 'Vente directe'}
                                         </td>
                                         <td className="px-4 py-2 whitespace-nowrap">
                                             <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-medium rounded-full ${getStatusClasses(ad.displayStatus)}`}>
