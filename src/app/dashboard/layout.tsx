@@ -63,20 +63,20 @@ export default async function DashboardLayout({
             </Link>
 
             {/* Mes annonces */}
-            <Link href={`${basePath}/ads`}>
+            <Link href={`/dashboard/ads`}>
               <Button variant="ghost" className="w-full justify-start">
                 Mes Annonces
               </Button>
             </Link>
 
             {/* Mes Achats & Enchères (logique fusionnée) */}
-            <Link
-              href={isProOrAdmin ? `${basePath}/bi` : "/dashboard/purchases"}
-            >
-              <Button variant="ghost" className="w-full justify-start">
-                {isProOrAdmin ? "Mes Achats & Enchères" : "Mes Achats"}
-              </Button>
-            </Link>
+            {isProOrAdmin && (
+              <Link href={`/dashboard/purchases`}>
+                <Button variant="ghost" className="w-full justify-start">
+                  Mes achats et enchères
+                </Button>
+              </Link>
+            )}
 
             {/* Favoris */}
             <Link href="/dashboard/favorites">

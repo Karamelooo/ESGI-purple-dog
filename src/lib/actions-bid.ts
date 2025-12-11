@@ -3,10 +3,16 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-
 import { getRequiredIncrement } from "@/lib/actions-rules"; 
+import { stripe } from "@/lib/stripe";
+import { redirect } from 'next/navigation';
 
-//notif des ebchères en temps réel
+// Type definition for Notification logic (implicit in snippet)
+// Assuming standard Prisma types or separate file.
+
+// --- Helper Functions ---
+
+// Notif des enchères en temps réel
 async function createNotification(userId: number, message: string, link: string) {
     if (!userId) return;
 
@@ -20,15 +26,7 @@ async function createNotification(userId: number, message: string, link: string)
     });
 }
 
-
-
-
-
-// ... imports
-import { stripe } from "@/lib/stripe";
-import { redirect } from 'next/navigation';
-
-// ... existing code ...
+// --- Types ---
 
 export type BidState = {
     amount?: number;
@@ -37,10 +35,11 @@ export type BidState = {
     message?: string;
 } | null;
 
+// --- Actions ---
+
 export async function placeBid(prevState: BidState, formData: FormData) { 
     
     try {
-        // ... existing inputs retrieval
         const amountInput = formData.get('amount');
         const adIdInput = formData.get('adId'); 
         
@@ -69,7 +68,6 @@ export async function placeBid(prevState: BidState, formData: FormData) {
         // STRIPE CHECK
         const user = await prisma.user.findUnique({ where: { id: currentUserId }});
         if (!user?.stripeCustomerId) {
-             // In a real app we might redirect, but here we throw error telling them to go to settings
              return { success: false, message: "Veuillez ajouter un moyen de paiement dans votre profil avant d'enchérir." };
         }
         const paymentMethods = await stripe.paymentMethods.list({ customer: user.stripeCustomerId, type: 'card' });
@@ -77,7 +75,6 @@ export async function placeBid(prevState: BidState, formData: FormData) {
              return { success: false, message: "Veuillez ajouter une carte bancaire valide dans votre profil." };
         }
 
-        // ... existing ad validation logic ...
         const ad = await prisma.ad.findUnique({
             where: { id: adId },
             include: { 
@@ -96,17 +93,18 @@ export async function placeBid(prevState: BidState, formData: FormData) {
         if (previousBestBidderId && currentUserId === previousBestBidderId) {
              throw new Error("Vous êtes déjà le meilleur enchérisseur.");
         }
+        // Prevent bidding on own ad
+        if (ad.userId === currentUserId) {
+            throw new Error("Vous ne pouvez pas enchérir sur votre propre annonce.");
+        }
 
-        const currentPrice = ad.bids[0]?.amount ?? ad.price ?? 0; // Use highest bid or start price
+        const currentPrice = ad.bids[0]?.amount ?? ad.price ?? 0;
         const requiredIncrement = getRequiredIncrement(currentPrice);
         const minimumRequiredBid = currentPrice + requiredIncrement;
 
         if (bidAmount < minimumRequiredBid) {
             throw new Error(`L'enchère doit être d'au moins ${minimumRequiredBid} € (palier de ${requiredIncrement} €).`);
         }
-        
-        // ... (Optional: Palier check logic might need adjustment if currentPrice depends on bids) ...
-        // Keeping original logic structure but simplified for brevity in this view
         
         await prisma.bid.create({
             data: {
@@ -129,11 +127,11 @@ export async function placeBid(prevState: BidState, formData: FormData) {
             isExtended = true;
         }
         
-        // Update Ad Price (Current Price) to reflect new highest bid
+        // Update Ad Price & End Date
         await prisma.ad.update({
             where: { id: adId },
             data: { 
-                price: bidAmount, // Updating displayed price
+                price: bidAmount,
                 endDate: newEndDate
             }
         });
@@ -156,25 +154,33 @@ export async function placeBid(prevState: BidState, formData: FormData) {
     }
 }
 
+
 /**
  * Ajoute au panier (Réservation de 10 minutes)
  */
 export async function buyNow(adId: number) {
     const session = await auth();
     if (!session?.user) return { message: "Connectez-vous pour acheter." };
-    // if (session.user.role !== 'PRO') return { message: "Réservé aux pros." }; // Removal check if needed or keep
+    // if (session.user.role !== 'PRO') return { message: "Réservé aux pros." };
 
+    // --- CONFLICT RESOLUTION START ---
+    // We merged the definition of userId/now with the validation logic inside the transaction.
     const userId = Number(session.user.id);
     const now = new Date();
+    // --- CONFLICT RESOLUTION END ---
 
     try {
         await prisma.$transaction(async (tx) => {
             const ad = await tx.ad.findUnique({ where: { id: adId } });
+            
             if (!ad) throw new Error("Introuvable.");
             if (ad.type !== 'SALE') throw new Error("Pas en vente directe.");
-            if (ad.status !== 'ACTIVE' && ad.status !== 'PENDING') throw new Error("Non disponible.");
+            if (ad.status !== 'ACTIVE' && ad.status !== 'PENDING') throw new Error("Non disponible (déjà vendu ou inactif).");
             
-            // Verify user exists to prevent FK error (stale session)
+            // Self-purchase check (Merged from origin/main logic)
+            if (ad.userId === userId) throw new Error("Vous ne pouvez pas acheter votre propre annonce.");
+            
+            // Verify user exists to prevent FK error
             const userExists = await tx.user.findUnique({ where: { id: userId } });
             if (!userExists) throw new Error("Utilisateur introuvable. Veuillez vous reconnecter.");
             
@@ -190,7 +196,7 @@ export async function buyNow(adId: number) {
                 data: {
                     reservedUntil,
                     reservedById: userId,
-                    // status: 'PENDING' // Optional: Change status to PENDING so others don't see it as purely ACTIVE?
+                    // status: 'PENDING' // Optional
                 }
             });
         });
@@ -202,6 +208,7 @@ export async function buyNow(adId: number) {
     revalidatePath(`/ad/${adId}`);
     return { message: "Article ajouté au panier (réservé 10 min). Allez dans 'Mes Achats' pour payer." };
 }
+
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function confirmPurchase(adId: number, prevState: any, formData: FormData) {
@@ -224,7 +231,6 @@ export async function confirmPurchase(adId: number, prevState: any, formData: Fo
              
              // Check if reserved by user
              if (ad.reservedById !== userId && (!ad.reservedUntil || ad.reservedUntil < new Date())) {
-                 // If reservation expired or not reserved by this user, check if free
                  if (ad.status === 'SOLD') throw new Error("Déjà vendu.");
                  if (ad.reservedUntil && ad.reservedUntil > new Date() && ad.reservedById !== userId) throw new Error("Réservé par un autre.");
              }
@@ -242,10 +248,10 @@ export async function confirmPurchase(adId: number, prevState: any, formData: Fo
              await tx.ad.update({
                  where: { id: adId },
                  data: {
-                     status: 'SOLD',
-                     buyerId: userId,
-                     reservedUntil: null,
-                     reservedById: null
+                      status: 'SOLD',
+                      buyerId: userId,
+                      reservedUntil: null,
+                      reservedById: null
                  }
              });
         });
@@ -260,7 +266,8 @@ export async function confirmPurchase(adId: number, prevState: any, formData: Fo
 }
 
 
-//notif de cloture des enchères expirées
+
+// notif de cloture des enchères expirées
 export async function closeExpiredAuctions() {
     console.log("Démarrage de la tâche de clôture des enchères expirées...");
     
@@ -269,7 +276,6 @@ export async function closeExpiredAuctions() {
     const expiredAds = await prisma.ad.findMany({
         where: {
             type: 'AUCTION',
-            // status: 'ACTIVE', // Or PENDING. Let's capture both to be safe against manual status changes
             status: { in: ['ACTIVE', 'PENDING'] },
             endDate: {
                 lte: now, 
@@ -323,10 +329,6 @@ export async function closeExpiredAuctions() {
                 }
             } catch (e: unknown) {
                 console.error(`Erreur paiement enchère ${ad.id}:`, e);
-                // On continue quand même pour marquer comme vendu, ou on marque comme "PAYMENT_FAILED"?
-                // Pour l'instant, disons qu'on marque VENDU mais on notifie l'échec?
-                // Le CdC dit "est débité". Si échec, peut-être REJECTED ou PENDING_PAYMENT?
-                // Restons simple: SOLD (l'admin gérera les impayés)
             }
 
             await prisma.ad.update({
@@ -368,76 +370,3 @@ export async function closeExpiredAuctions() {
 
     return { success: true, message: `${expiredAds.length} enchère(s) traitée(s).` };
 }
-
-/*export async function submitOfferForSale(adId: number, amount: number) {
-    const session = await auth();
-
-    if (!session?.user || !session.user.id) {
-        return { success: false, message: "Non authentifié" };
-    }
-
-    const userId = Number(session.user.id);
-    
-    // Le CdC stipule que seuls les Pros peuvent acheter/enchérir, nous conservons cette vérification.
-    if (session.user.role !== 'PRO') {
-        return { success: false, message: "Seuls les professionnels peuvent soumettre une offre de prix." };
-    }
-
-    if (amount <= 0 || isNaN(amount)) {
-        return { success: false, message: "Veuillez saisir un montant d'offre valide." };
-    }
-
-    try {
-        const ad = await prisma.ad.findUnique({
-            where: { id: adId },
-            select: { 
-                userId: true, 
-                type: true, 
-                status: true,
-                title: true,
-                price: true
-            }
-        });
-
-        if (!ad) {
-            return { success: false, message: "Annonce introuvable." };
-        }
-        // Cette fonction ne concerne que les annonces en vente directe actives.
-        if (ad.type !== 'SALE' || ad.status !== 'ACTIVE') {
-            return { success: false, message: "Cette annonce n'accepte pas d'offres de prix actuellement." };
-        }
-        if (ad.userId === userId) {
-            return { success: false, message: "Vous ne pouvez pas faire d'offre sur votre propre annonce." };
-        }
-        
-        // --- Enregistrement de l'offre (Bid) ---
-        // Le cast 'as any' est ajouté pour éviter les problèmes de typage persistants de Prisma
-        await (prisma as any).bid.create({
-            data: {
-                amount: amount,
-                adId: adId,
-                userId: userId,
-                // On peut ajouter un flag ici si vous voulez distinguer les offres sur SALE des enchères AUCTION
-                // Par exemple: type: 'OFFER' (si vous ajoutez un champ type à votre modèle Bid)
-            },
-        });
-
-        const adLink = `/ad/${adId}`;
-        
-        // Notification au vendeur (Particulier)
-        const sellerMessage = `🔔 Nouvelle offre de ${amount} € reçue sur votre annonce "${ad.title}". Consultez votre tableau de bord.`;
-        await createNotification(ad.userId, sellerMessage, adLink);
-
-        // Revalidation pour que le dashboard du vendeur se mette à jour
-        revalidatePath(adLink);
-        revalidatePath('/dashboard/ads');
-        
-        return { success: true, message: "Votre offre a été soumise au vendeur. Il peut l'accepter ou la refuser." };
-
-    } catch (error) {
-        console.error("Erreur lors de la soumission de l'offre:", error);
-        return { success: false, message: "Erreur serveur lors de la soumission de l'offre." };
-    }
-}
-
-*/

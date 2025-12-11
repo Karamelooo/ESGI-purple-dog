@@ -20,6 +20,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default async function AdPage({ params }: { params: { id: string } }) {
+  // Next.js 15+ params are async
   const { id } = await params;
   const session = await auth();
 
@@ -36,7 +37,12 @@ export default async function AdPage({ params }: { params: { id: string } }) {
 
   const isPro = session?.user?.role === "PRO";
   const isOwner = session?.user?.id === ad.user.id.toString();
-  const currentUserId = session?.user ? parseInt(session.user.id!) : undefined;
+  // On garde currentUserId au cas où tu en aurais besoin ailleurs ou pour le futur
+  const currentUserId = session?.user?.id
+    ? parseInt(session.user.id)
+    : undefined;
+
+  // Image handling
   const images = ad.images && ad.images.length > 0 ? ad.images : [];
   const mainImage =
     images[0] ||
@@ -124,8 +130,8 @@ export default async function AdPage({ params }: { params: { id: string } }) {
           <div className="border-t border-gray-200 pt-6">
             {ad.status === "ACTIVE" ? (
               <>
-                {ad.status === "ACTIVE" &&
-                  ad.reservedUntil &&
+                {/* Logique Panier / Réservation (Si actif) */}
+                {ad.reservedUntil &&
                   new Date(ad.reservedUntil) > new Date() && (
                     <div className="mb-4 p-3 bg-orange-100 text-orange-800 rounded-lg flex justify-between items-center">
                       <span className="font-bold">
@@ -135,11 +141,17 @@ export default async function AdPage({ params }: { params: { id: string } }) {
                     </div>
                   )}
 
+                {/* Logique Vente Directe (Modifiée selon ta demande) */}
                 {ad.type === "SALE" &&
-                  (isPro ? (
+                  (isOwner ? (
+                    <p className="text-center text-gray-500">
+                      Vous êtes le vendeur de cette annonce.
+                    </p>
+                  ) : isPro ? (
                     <BuyButton
                       adId={ad.id}
                       price={ad.price ?? 0}
+                      // J'ai laissé ces props optionnelles au cas où tu voudrais réactiver la gestion avancée du panier plus tard
                       reservedUntil={ad.reservedUntil}
                       reservedById={ad.reservedById}
                       currentUserId={currentUserId}
@@ -149,13 +161,12 @@ export default async function AdPage({ params }: { params: { id: string } }) {
                       Connectez-vous pour acheter
                     </p>
                   ) : (
-                    !isOwner && (
-                      <p className="text-center text-red-500">
-                        Seuls les pros peuvent acheter
-                      </p>
-                    )
+                    <p className="text-center text-red-500">
+                      Seuls les pros peuvent acheter
+                    </p>
                   ))}
 
+                {/* Logique Enchères */}
                 {ad.type === "AUCTION" && (
                   <>
                     {isPro ? (
@@ -172,7 +183,7 @@ export default async function AdPage({ params }: { params: { id: string } }) {
                       )
                     )}
 
-                    {/* Bids History */}
+                    {/* Historique des enchères */}
                     <div className="mt-8">
                       <h3 className="font-bold text-gray-900 mb-4">
                         Historique des enchères ({ad.bids.length})
