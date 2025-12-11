@@ -3,8 +3,9 @@ import "./globals.css";
 import Link from "next/link";
 import Image from "next/image";
 import { auth } from "@/auth";
-import { SignInButton, SignOutButton } from "@/components/auth-buttons";
-import { Toaster } from "sonner";
+import { SignInButton, SignOutButton } from '@/components/auth-buttons';
+import { Toaster } from 'sonner';
+import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
   title: "Purple Dog",
@@ -19,7 +20,7 @@ export default async function RootLayout({
   const session = await auth();
   return (
     <html lang="fr">
-      <body>
+      <body className="flex flex-col min-h-screen">
         <header className="sticky top-0 z-50 bg-white border-b border-gray-200 h-[72px] flex items-center shadow-sm">
           <div className="container mx-auto px-4 flex items-center justify-between">
             <Link
@@ -101,8 +102,11 @@ export default async function RootLayout({
             </nav>
           </div>
         </header>
-        <main>{children}</main>
-        <Toaster richColors position="top-center" />
+        <main className="flex-grow">
+          {children}
+        </main>
+        <Footer />
+        <Toaster position="top-center" />
       </body>
     </html>
   );

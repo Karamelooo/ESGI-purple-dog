@@ -141,9 +141,13 @@ export default async function Home() {
       <section className="bg-purple-900 text-white py-16">
         <div className="container mx-auto px-4 text-center max-w-xl">
           <h2 className="text-2xl font-bold mb-4">Restez informé</h2>
-          <p className="mb-8 text-purple-200">
-            Recevez les dernières tendances et objets d&apos;exception.
-          </p>
+          <p className="mb-8 text-purple-200">Recevez les dernières tendances et objets d&apos;exception.</p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input type="email" placeholder="Votre adresse mail" className="flex-1 h-10 px-4 rounded-md text-gray-900 bg-white border border-gray-300 focus:outline-none" />
+            <Button size="lg" variant="secondary" className="font-bold">
+              S&apos;inscrire
+            </Button>
+          </div>
         </div>
       </section>
 
