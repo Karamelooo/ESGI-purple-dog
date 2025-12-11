@@ -43,7 +43,7 @@ export default async function DashboardLayout({
                 variant="ghost"
                 className="w-full justify-start font-bold"
               >
-                Vue d'ensemble
+                Vue d&apos;ensemble
               </Button>
             </Link>
             <Link href={`/dashboard/${isPro ? "pro" : "user"}/ads`}>
