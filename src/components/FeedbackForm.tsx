@@ -3,7 +3,7 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { submitFeedback } from '@/lib/actions-feedback';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // État initial
 const initialState = {
@@ -113,7 +113,8 @@ function StarRating({ currentRating, setCurrentRating }: {
 
 // --- Composant principal du formulaire ---
 export default function FeedbackForm() {
-    const [state, dispatch] = useFormState(submitFeedback, initialState);
+    const [state, dispatch] = React.useActionState(submitFeedback, initialState);
+
     const [starRating, setStarRating] = useState<number | null>(null);
     const [npsScore, setNpsScore] = useState<number | null>(null);
 
