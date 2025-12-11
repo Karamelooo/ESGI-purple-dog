@@ -13,7 +13,10 @@ export default async function AdminUsersPage() {
 
     const users = await prisma.user.findMany({
         orderBy: { createdAt: 'desc' },
-        include: { _count: { select: { ads: true } } }
+        include: {
+            _count: { select: { ads: true } },
+            plan: true
+        }
     });
 
     return (
@@ -33,6 +36,7 @@ export default async function AdminUsersPage() {
                                 <th className="px-6 py-4 text-left font-medium text-gray-500">Info</th>
                                 <th className="px-6 py-4 text-left font-medium text-gray-500">Statut</th>
                                 <th className="px-6 py-4 text-left font-medium text-gray-500">Rôle</th>
+                                <th className="px-6 py-4 text-left font-medium text-gray-500">Forfait</th>
                                 <th className="px-6 py-4 text-right font-medium text-gray-500">Actions</th>
                             </tr>
                         </thead>
@@ -59,11 +63,20 @@ export default async function AdminUsersPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2 py-1 rounded text-xs font-bold ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
-                                                user.role === 'PRO' ? 'bg-blue-100 text-blue-700' :
-                                                    'bg-gray-100 text-gray-700'
+                                            user.role === 'PRO' ? 'bg-blue-100 text-blue-700' :
+                                                'bg-gray-100 text-gray-700'
                                             }`}>
                                             {user.role}
                                         </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {user.plan ? (
+                                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-indigo-50 text-indigo-700">
+                                                {user.plan.name}
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-400 text-xs">-</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <UserActions user={user} />

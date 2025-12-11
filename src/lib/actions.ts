@@ -45,12 +45,16 @@ export async function registerUser(prevState: string | undefined, formData: Form
 
         const hashedPassword = await bcrypt.hash(password, 10)
 
+        // Find "PARTICULIER" plan
+        const plan = await prisma.subscriptionPlan.findUnique({ where: { name: 'PARTICULIER' } })
+
         await prisma.user.create({
             data: {
                 email,
                 name,
                 password: hashedPassword,
                 role: Role.USER,
+                planId: plan?.id
             },
         })
     } catch (error) {
@@ -114,7 +118,7 @@ export async function registerPro(prevState: string | undefined, formData: FormD
         await signIn('credentials', {
             email: formData.get('email'),
             password: formData.get('password'),
-            redirectTo: '/dashboard/pro',
+            redirectTo: '/pricing',
         })
     } catch (error) {
         if (error instanceof AuthError) {

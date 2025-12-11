@@ -25,6 +25,7 @@ const navigation = [
     { name: 'Avis', href: '/admin/reviews', icon: FileText },
     { name: 'Comptabilité', href: '/admin/accounting', icon: CreditCard },
     { name: 'Livraisons', href: '/admin/delivery', icon: Truck },
+    { name: 'Forfaits', href: '/admin/plans', icon: CreditCard }, // Reusing CreditCard for now or maybe another icon like Layers
     { name: 'Paramètres', href: '/admin/settings', icon: Settings },
 ];
 

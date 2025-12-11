@@ -4,7 +4,6 @@ import * as bcrypt from 'bcryptjs'
 const prisma = new PrismaClient()
 
 async function main() {
-    // Safe cleanup
     await prisma.review.deleteMany()
     await prisma.transaction.deleteMany()
     await prisma.bid.deleteMany()
@@ -13,8 +12,31 @@ async function main() {
     await prisma.ad.deleteMany()
     await prisma.user.deleteMany()
     await prisma.category.deleteMany()
+    await prisma.subscriptionPlan.deleteMany()
 
-    // 1. Create Categories
+
+    const plansData = [
+        {
+            name: 'PARTICULIER',
+            price: 0,
+            features: ['Compte gratuit', 'Achats illimités', 'Ventes standard'],
+            trialPeriodDays: 0,
+            limits: {}
+        },
+        {
+            name: 'PROFESSIONNEL',
+            price: 49.00,
+            features: ['Accès illimité', '1 mois offert', 'Dashboard Pro', 'Support prioritaire'],
+            trialPeriodDays: 30,
+            limits: { unlimited: true }
+        },
+    ]
+
+    for (const plan of plansData) {
+        await prisma.subscriptionPlan.create({ data: plan })
+    }
+    const allPlans = await prisma.subscriptionPlan.findMany();
+
     const categoriesData = [
         { name: 'Bijoux et montres', slug: 'bijoux-montres' },
         { name: 'Meubles anciens', slug: 'meubles-anciens' },
@@ -36,10 +58,8 @@ async function main() {
     }
     const allCats = await prisma.category.findMany();
 
-    // 2. Create Users
     const password = await bcrypt.hash('password123', 10)
 
-    // Admin
     const admin = await prisma.user.create({
         data: {
             email: 'admin@purpledog.com',
@@ -49,7 +69,6 @@ async function main() {
         },
     })
 
-    // Professional Seller
     const proUser = await prisma.user.create({
         data: {
             email: 'pro@gallery.com',
@@ -59,11 +78,9 @@ async function main() {
             companyName: 'Galerie JP',
             siret: '12345678900019',
             specialties: 'Tableaux, Art déco',
-            // stripeCustomerId: null, // Let app generate it on demand
         }
     })
 
-    // Individual Seller
     const individualUser = await prisma.user.create({
         data: {
             email: 'johnny@gmail.com',
@@ -73,7 +90,6 @@ async function main() {
         }
     })
 
-    // Buyer User (Specific Pro Profile from conflict resolution)
     const buyerUser = await prisma.user.create({
         data: {
             email: 'buyer@purpledog.com',
@@ -86,19 +102,16 @@ async function main() {
         }
     })
 
-    // 3. Create Ads
-
-    // Auction Ad by Pro
     const auctionAd = await prisma.ad.create({
         data: {
             title: 'Tableau Ancien XIXe',
             description: 'Magnifique tableau huile sur toile, représentant un paysage bucolique. Signé en bas à droite.',
             type: AdType.AUCTION,
             status: 'ACTIVE',
-            price: 500, // Starting price
+            price: 500,
             reservePrice: 800,
             startDate: new Date(),
-            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // +7 days
+            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             dimensions: '50x70cm',
             weight: 2.5,
             userId: proUser.id,
@@ -107,14 +120,13 @@ async function main() {
         }
     })
 
-    // Fast Sale Ad by Individual
     const saleAd = await prisma.ad.create({
         data: {
             title: 'Montre Vintage Omega',
             description: 'Montre en parfait état de marche. Année 1960. Bracelet cuir neuf.',
             type: AdType.SALE,
             status: 'ACTIVE',
-            price: 1200, // Fixed price
+            price: 1200,
             dimensions: '40mm',
             weight: 0.1,
             userId: individualUser.id,
@@ -123,27 +135,23 @@ async function main() {
         }
     })
 
-    // Reserved Ad (in cart) - Resolved from HEAD
     const reservedAd = await prisma.ad.create({
         data: {
             title: 'Vase Ming Rare',
             description: 'Vase authentique, réservé pour achat. Certificat d\'authenticité disponible.',
             type: AdType.SALE,
-            status: 'ACTIVE', // Still active but reserved
+            status: 'ACTIVE',
             price: 2500,
             dimensions: '20x20x40cm',
             weight: 1.2,
             userId: proUser.id,
             categoryId: allCats.find(c => c.slug === 'collection')?.id || allCats[0].id,
             reservedById: individualUser.id,
-            reservedUntil: new Date(Date.now() + 10 * 60 * 1000), // Reserved for 10 mins
+            reservedUntil: new Date(Date.now() + 10 * 60 * 1000),
             images: ['https://placehold.co/600x400?text=Vase+Ming'],
         }
     })
 
-    // 4. Create Transactions & Sold Ads
-
-    // Sold Ad 1
     const soldAd1 = await prisma.ad.create({
         data: {
             title: 'Vase Gallé Art Nouveau',
@@ -163,23 +171,22 @@ async function main() {
     const transaction1 = await prisma.transaction.create({
         data: {
             amount: 450,
-            commissionAmount: 45, // 10%
+            commissionAmount: 45,
             type: 'PAIEMENT',
             status: 'COMPLETED',
             stripePaymentId: 'ch_1234567890',
             adId: soldAd1.id,
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) // 2 days ago
+            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
         }
     })
 
-    // Sold Ad 2
     const soldAd2 = await prisma.ad.create({
         data: {
             title: 'Lampe Jielde',
             description: 'Lampe industrielle vintage 2 bras, finition graphite.',
             type: AdType.AUCTION,
             status: 'SOLD',
-            price: 320, // Final price
+            price: 320,
             userId: individualUser.id,
             buyerId: admin.id,
             categoryId: allCats.find(c => c.slug === 'meubles-anciens')?.id || allCats[0].id,
@@ -190,18 +197,15 @@ async function main() {
     const transaction2 = await prisma.transaction.create({
         data: {
             amount: 320,
-            commissionAmount: 32, // 10%
+            commissionAmount: 32,
             type: 'PAIEMENT',
             status: 'COMPLETED',
             stripePaymentId: 'ch_0987654321',
             adId: soldAd2.id,
-            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) // 5 days ago
+            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
         }
     })
 
-    // 5. Augmentation: Bids, Reviews, Notifications
-
-    // Bids on Auction Ad
     await prisma.bid.create({
         data: {
             amount: 550,
@@ -220,7 +224,6 @@ async function main() {
         }
     })
 
-    // Reviews
     await prisma.review.create({
         data: {
             rating: 5,
@@ -241,7 +244,6 @@ async function main() {
         }
     })
 
-    // Notifications
     await prisma.notification.create({
         data: {
             userId: proUser.id,
@@ -254,8 +256,7 @@ async function main() {
     await prisma.notification.create({
         data: {
             userId: individualUser.id,
-            message: "Nouvelle enchère de 600€ sur votre tableau (non, c'est pas votre tableau, c'est celui du pro, mais pour l'exemple).", // Correction: Individual user didn't post the tableau. Use correct logic.
-            // Let's make a real notification
+            message: "Nouvelle enchère de 600€ sur votre tableau (non, c'est pas votre tableau, c'est celui du pro, mais pour l'exemple).",
             read: false,
         }
     })

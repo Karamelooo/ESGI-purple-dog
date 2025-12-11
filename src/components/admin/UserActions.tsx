@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from "react";
-import { toggleBlockUser, updateUserRole } from "@/app/actions/admin-users";
-import { Ban, CheckCircle } from "lucide-react";
+import { toggleBlockUser, updateUserRole, revokeUserPlan } from "@/app/actions/admin-users";
+import { Ban, CheckCircle, RotateCcw } from "lucide-react";
 
 export default function UserActions({ user }: { user: any }) {
     const [isLoading, setIsLoading] = useState(false);
@@ -19,6 +19,15 @@ export default function UserActions({ user }: { user: any }) {
         setIsLoading(false);
     };
 
+    const handleRevokePlan = async () => {
+        if (!confirm("Voulez-vous vraiment révoquer le forfait de cet utilisateur ?\n\nCela annulera son abonnement immédiatement et il devra en sélectionner un nouveau lors de sa prochaine connexion.")) {
+            return;
+        }
+        setIsLoading(true);
+        await revokeUserPlan(user.id);
+        setIsLoading(false);
+    };
+
     return (
         <div className="flex items-center gap-2 justify-end">
             <select
@@ -31,6 +40,17 @@ export default function UserActions({ user }: { user: any }) {
                 <option value="PRO">Professionnel</option>
                 <option value="ADMIN">Admin</option>
             </select>
+
+            {user.planId && (
+                <button
+                    onClick={handleRevokePlan}
+                    disabled={isLoading}
+                    className="p-1 rounded hover:bg-gray-100 h-8 w-8 flex items-center justify-center text-orange-600"
+                    title="Révoquer le forfait (Force la resélection)"
+                >
+                    <RotateCcw size={16} />
+                </button>
+            )}
 
             <button
                 onClick={handleBlockToggle}

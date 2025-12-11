@@ -37,16 +37,20 @@ model User {
   createdAt     DateTime       @default(now())
   isBlocked     Boolean        @default(false)
 
-  // Profile fields
   photoUrl      String?
 
-  // Pro fields
   companyName   String?
   siret         String?
-  specialties   String?        // JSON or comma-separated
+  specialties   String?
   
   stripeCustomerId String?
-  // Relations
+  
+  planId             Int?
+  plan               SubscriptionPlan? @relation(fields: [planId], references: [id])
+  stripeSubscriptionId String?
+  subscriptionStatus   String?
+  subscriptionEndDate  DateTime?
+
   ads           Ad[]
   bids          Bid[]
   notifications Notification[]
@@ -55,6 +59,22 @@ model User {
   reservedAds   Ad[]           @relation("ReservedAds")
   reviewsWritten Review[]      @relation("ReviewsWritten")
   reviewsReceived Review[]     @relation("ReviewsReceived")
+}
+
+model SubscriptionPlan {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  price       Float
+  currency    String   @default("EUR")
+  features    String[]
+  trialPeriodDays Int      @default(0)
+  limits      Json?
+  stripePriceId String?
+
+  users       User[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Category {
@@ -74,22 +94,17 @@ model Ad {
   title       String
   description String
 
-  // Details
   dimensions  String?
   weight      Float?
 
-  // Images & Docs
   images      String[]
   documents   String[]
 
-  // Location
   location    String?
 
-  // Status & Type
   status      AdStatus @default(PENDING)
   type        AdType
 
-  // Pricing / Auction
   price        Float?
   reservePrice Float?
   buyNowPrice  Float?
@@ -97,7 +112,6 @@ model Ad {
   startDate   DateTime  @default(now())
   endDate     DateTime?
 
-  // Relations
   categoryId  Int
   category    Category @relation(fields: [categoryId], references: [id])
 
@@ -109,7 +123,6 @@ model Ad {
   buyerId     Int?
   buyer       User?     @relation("BuyerAds", fields: [buyerId], references: [id])
   
-  // Cart Reservation
   reservedUntil DateTime?
   reservedById  Int?
   reservedBy    User?     @relation("ReservedAds", fields: [reservedById], references: [id])

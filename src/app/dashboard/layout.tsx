@@ -15,15 +15,25 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  if (session.user.role === "PRO") {
+    const prisma = (await import("@/lib/prisma")).default;
+    const dbUser = await prisma.user.findUnique({
+      where: { email: session.user.email! },
+      select: { planId: true }
+    });
+
+    if (!dbUser?.planId) {
+      redirect("/pricing");
+    }
+  }
+
   const { role, name } = session.user;
   const isPro = role === "PRO";
   const isAdmin = role === "ADMIN";
   const isProOrAdmin = isPro || isAdmin;
 
-  // Chemin de base pour les liens du tableau de bord
   const basePath = isPro ? "/dashboard/pro" : "/dashboard/user";
 
-  // Lien de feedback conditionnel pour les utilisateurs non-PRO
   const feedbackLink = !isPro ? (
     <Link href={`${basePath}/feedback`}>
       <Button
