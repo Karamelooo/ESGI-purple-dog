@@ -6,7 +6,7 @@ const prisma = new PrismaClient()
 async function main() {
     // Safe cleanup
     await prisma.transaction.deleteMany()
-    await prisma.bid.deleteMany
+    await prisma.bid.deleteMany()
     await prisma.notification.deleteMany()
     await prisma.ad.deleteMany()
     await prisma.user.deleteMany()
