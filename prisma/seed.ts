@@ -59,7 +59,7 @@ async function main() {
             companyName: 'Galerie JP',
             siret: '12345678900019',
             specialties: 'Tableaux, Art déco',
-            stripeCustomerId: 'cus_123NB',
+            // stripeCustomerId: null, // Let app generate it on demand
         }
     })
 

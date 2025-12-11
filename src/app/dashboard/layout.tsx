@@ -27,12 +27,12 @@ export default async function DashboardLayout({
             <div className="flex flex-col">
               <h2 className="font-bold text-lg mb-0">{session.user.name}</h2>
               <p className="text-sm text-gray-500">
-                {isPro ? "Compte professionnel" : "Compte particulier"}
+                {isPro ? "Compte Professionnel" : "Compte Particulier"}
               </p>
             </div>
 
             {/* Cloche de Notification */}
-            <div className="flex-shrink-0 pt-0.5">
+            <div className="shrink-0 pt-0.5">
               <NotificationBell />
             </div>
           </div>
@@ -46,15 +46,29 @@ export default async function DashboardLayout({
                 Vue d&apos;ensemble
               </Button>
             </Link>
-            <Link href={`/dashboard/${isPro ? "pro" : "user"}/ads`}>
+            <Link href="/dashboard/ads">
               <Button variant="ghost" className="w-full justify-start">
-                Mes annonces
+                Mes Annonces
               </Button>
             </Link>
-            {/* Rappel : Lien conservé en /bi comme demandé */}
-            <Link href={`/dashboard/${isPro ? "pro" : "user"}/bi`}>
+            <Link href="/dashboard/purchases">
               <Button variant="ghost" className="w-full justify-start">
-                {isPro ? "Mes achats et enchères" : "Mes achats"}
+                {isPro ? "Mes Achats & Enchères" : "Mes Achats"}
+              </Button>
+            </Link>
+            <Link href="/dashboard/favorites">
+              <Button variant="ghost" className="w-full justify-start">
+                Favoris
+              </Button>
+            </Link>
+            <Link href="/dashboard/payment">
+              <Button variant="ghost" className="w-full justify-start">
+                Moyens de paiement
+              </Button>
+            </Link>
+            <Link href="/dashboard/profile">
+              <Button variant="ghost" className="w-full justify-start">
+                Mon Profil
               </Button>
             </Link>
             <Link href="/deposer-une-annonce">
