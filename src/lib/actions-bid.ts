@@ -178,10 +178,21 @@ export async function buyNow(adId: number) {
     if (!session?.user) return { message: "Connectez-vous pour acheter." };
     if (session.user.role !== 'PRO') return { message: "Réservé aux pros." };
 
-    const ad = await prisma.ad.findUnique({ where: { id: adId } });
+    const ad = await prisma.ad.findUnique({
+        where: { id: adId },
+        select: {
+            id: true,
+            type: true,
+            status: true,
+            userId: true,
+            title: true,
+            price: true,
+        },
+    });
     if (!ad) return { message: "Introuvable." };
     if (ad.type !== 'SALE') return { message: "Pas en vente directe." };
     if (ad.status !== 'ACTIVE') return { message: "Déjà vendu ou inactif." };
+    if (ad.userId === Number(session.user.id)) return { message: "Vous ne pouvez pas acheter votre propre annonce." };
 
     await prisma.ad.update({
         where: { id: adId },

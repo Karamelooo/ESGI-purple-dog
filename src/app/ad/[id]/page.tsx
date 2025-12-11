@@ -107,9 +107,13 @@ export default async function AdPage({ params }: { params: { id: string } }) {
                         {ad.status === 'ACTIVE' ? (
                             <>
                                 {ad.type === 'SALE' && (
-                                    isPro ? <BuyButton adId={ad.id} price={ad.price ?? 0} /> : (
+                                    isOwner ? (
+                                        <p className="text-center text-gray-500">Vous êtes le vendeur de cette annonce.</p>
+                                    ) : isPro ? (
+                                        <BuyButton adId={ad.id} price={ad.price ?? 0} />
+                                    ) : (
                                         !session?.user ? <p className="text-center text-gray-500">Connectez-vous pour acheter</p> :
-                                            !isOwner && <p className="text-center text-red-500">Seuls les pros peuvent acheter</p>
+                                            <p className="text-center text-red-500">Seuls les pros peuvent acheter</p>
                                     )
                                 )}
 
