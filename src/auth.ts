@@ -28,6 +28,11 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                     const { email, password } = parsedCredentials.data;
                     const user = await getUser(email);
                     if (!user) return null;
+
+                    if (user.isBlocked) {
+                        throw new Error("Compte bloqué");
+                    }
+
                     const passwordsMatch = await bcrypt.compare(password, user.password);
 
                     if (passwordsMatch) {

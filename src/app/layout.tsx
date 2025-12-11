@@ -3,7 +3,7 @@ import "./globals.css";
 import Link from "next/link";
 import Image from "next/image";
 import { auth } from "@/auth";
-import { SignOutButton } from "@/components/auth-buttons";
+import { SignInButton, SignOutButton } from "@/components/auth-buttons";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
@@ -101,8 +101,8 @@ export default async function RootLayout({
             </nav>
           </div>
         </header>
-        <Toaster richColors position="top-center" />
         <main>{children}</main>
+        <Toaster richColors position="top-center" />
       </body>
     </html>
   );

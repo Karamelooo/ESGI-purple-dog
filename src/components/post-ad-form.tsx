@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { Category } from "@prisma/client";
 
@@ -23,10 +24,16 @@ export function PostAdForm({ categories }: { categories: Category[] }) {
   const [adType, setAdType] = useState("SALE");
   const [estimate, setEstimate] = useState<string | null>(null);
   const [isEstimating, setIsEstimating] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
 
   // Local state for estimate inputs
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
+
+  const selectedCategory = categories.find(
+    (c) => c.id.toString() === selectedCategoryId
+  );
+  const formConfig = (selectedCategory?.formConfig as any[]) || [];
 
   const handleEstimate = async () => {
     if (!title || !desc) return;
@@ -34,7 +41,7 @@ export function PostAdForm({ categories }: { categories: Category[] }) {
     try {
       const result = await getPriceEstimate(title, desc);
       setEstimate(result);
-    } catch (e) {
+    } catch {
       setEstimate("Erreur d'estimation");
     } finally {
       setIsEstimating(false);
@@ -49,7 +56,12 @@ export function PostAdForm({ categories }: { categories: Category[] }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label>Catégorie</Label>
-              <Select name="categoryId" required>
+              <Select
+                name="categoryId"
+                required
+                onValueChange={setSelectedCategoryId}
+                value={selectedCategoryId}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Choisir..." />
                 </SelectTrigger>
@@ -108,7 +120,7 @@ export function PostAdForm({ categories }: { categories: Category[] }) {
           <div className="bg-purple-50 p-4 rounded-lg flex items-center justify-between border border-purple-100">
             <div>
               <h4 className="font-bold text-purple-900">
-                Besoin d'aide pour le prix ?
+                Besoin d&apos;aide pour le prix ?
               </h4>
               <p className="text-sm text-purple-700">
                 Utilisez notre IA pour estimer la valeur.
@@ -153,7 +165,7 @@ export function PostAdForm({ categories }: { categories: Category[] }) {
                 placeholder="Prix minimum..."
               />
               <p className="text-xs text-gray-500">
-                Le prix en dessous duquel l'objet ne sera pas vendu.
+                Le prix en dessous duquel l&apos;objet ne sera pas vendu.
               </p>
             </div>
           )}
@@ -169,6 +181,72 @@ export function PostAdForm({ categories }: { categories: Category[] }) {
               <Input name="dimensions" placeholder="ex: 30x20x10cm" />
             </div>
           </div>
+
+          {/* Dynamic Fields */}
+          {formConfig.length > 0 && (
+            <div className="border-t pt-4 space-y-4">
+              <h3 className="font-medium text-lg text-gray-900">
+                Spécificités {selectedCategory?.name}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {formConfig.map((field, idx) => (
+                  <div key={idx} className="space-y-2">
+                    <Label>
+                      {field.label}{" "}
+                      {field.required && (
+                        <span className="text-red-500">*</span>
+                      )}
+                    </Label>
+
+                    {field.type === "textarea" ? (
+                      <Textarea
+                        name={`custom_${field.label}`}
+                        required={field.required}
+                        placeholder={field.label}
+                      />
+                    ) : field.type === "select" ? (
+                      <Select
+                        name={`custom_${field.label}`}
+                        required={field.required}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choisir..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {field.options?.split(",").map((opt: string) => (
+                            <SelectItem key={opt.trim()} value={opt.trim()}>
+                              {opt.trim()}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : field.type === "checkbox" ? (
+                      <div className="flex items-center space-x-2 pt-2">
+                        <Checkbox
+                          name={`custom_${field.label}`}
+                          id={`chk-${idx}`}
+                          required={field.required}
+                        />
+                        <Label
+                          htmlFor={`chk-${idx}`}
+                          className="font-normal cursor-pointer"
+                        >
+                          Oui
+                        </Label>
+                      </div>
+                    ) : (
+                      <Input
+                        type={field.type === "number" ? "number" : "text"}
+                        name={`custom_${field.label}`}
+                        required={field.required}
+                        placeholder={field.label}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {state?.message && (
             <p className="text-red-500 font-bold">{state.message}</p>
