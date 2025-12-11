@@ -22,7 +22,7 @@ const AdSchema = z.object({
     images: z.string().optional(),
 });
 
-export async function createAd(prevState: any, formData: FormData) {
+export async function createAd(prevState: unknown, formData: FormData) {
     const session = await auth();
     if (!session?.user) return { message: "Non autorisé" };
 
@@ -81,7 +81,7 @@ export async function createAd(prevState: any, formData: FormData) {
                 documents: [],
             }
         });
-    } catch (e) {
+    } catch (e: unknown) {
         console.error(e);
         return { message: "Erreur lors de la création." };
     }

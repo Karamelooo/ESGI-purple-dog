@@ -3,10 +3,16 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-
 import { getRequiredIncrement } from "@/lib/actions-rules"; 
+import { stripe } from "@/lib/stripe";
+import { redirect } from 'next/navigation';
 
-//notif des ebchères en temps réel
+// Type definition for Notification logic (implicit in snippet)
+// Assuming standard Prisma types or separate file.
+
+// --- Helper Functions ---
+
+// Notif des enchères en temps réel
 async function createNotification(userId: number, message: string, link: string) {
     if (!userId) return;
 
@@ -20,11 +26,18 @@ async function createNotification(userId: number, message: string, link: string)
     });
 }
 
+// --- Types ---
 
+export type BidState = {
+    amount?: number;
+    adId?: number;
+    success?: boolean;
+    message?: string;
+} | null;
 
+// --- Actions ---
 
-
-export async function placeBid(prevState: any, formData: FormData) { 
+export async function placeBid(prevState: BidState, formData: FormData) { 
     
     try {
         const amountInput = formData.get('amount');
@@ -37,12 +50,10 @@ export async function placeBid(prevState: any, formData: FormData) {
         const bidAmount = parseFloat(String(amountInput));
         const adId = Number(adIdInput); 
         
-        // VALIDATION du nombre
         if (isNaN(bidAmount) || bidAmount <= 0) {
             throw new Error("Veuillez saisir un montant d'enchère valide (un nombre positif).");
         }
         
-        // --- 2. Validation de l'Utilisateur ---
         const session = await auth();
         
         if (!session?.user || !session.user.id) {
@@ -54,10 +65,18 @@ export async function placeBid(prevState: any, formData: FormData) {
             throw new Error("Seuls les professionnels peuvent enchérir.");
         }
 
-        // --- 3. Récupération et Validation de l'Annonce ---
+        // STRIPE CHECK
+        const user = await prisma.user.findUnique({ where: { id: currentUserId }});
+        if (!user?.stripeCustomerId) {
+             return { success: false, message: "Veuillez ajouter un moyen de paiement dans votre profil avant d'enchérir." };
+        }
+        const paymentMethods = await stripe.paymentMethods.list({ customer: user.stripeCustomerId, type: 'card' });
+        if (paymentMethods.data.length === 0) {
+             return { success: false, message: "Veuillez ajouter une carte bancaire valide dans votre profil." };
+        }
+
         const ad = await prisma.ad.findUnique({
             where: { id: adId },
-            // Récupère la meilleure enchère pour la validation et la notification de l'ancien enchérisseur
             include: { 
                 bids: { 
                     orderBy: { amount: 'desc' }, 
@@ -66,26 +85,20 @@ export async function placeBid(prevState: any, formData: FormData) {
             }
         });
 
-        if (!ad) {
-            throw new Error("Annonce introuvable.");
-        }
-        if (ad.type !== 'AUCTION' || ad.status !== 'ACTIVE') {
-            throw new Error("Cette enchère n'est pas active ou n'est pas une enchère.");
-        }
-        
-        // La date de fin doit exister pour une enchère active
-        if (!ad.endDate) {
-             throw new Error("La date de fin de l'enchère n'est pas définie.");
-        }
+        if (!ad) throw new Error("Annonce introuvable.");
+        if (ad.type !== 'AUCTION' || ad.status !== 'ACTIVE') throw new Error("Enchère non active.");
+        if (!ad.endDate) throw new Error("Date de fin manquante.");
         
         const previousBestBidderId = ad.bids?.[0]?.userId;
-        
         if (previousBestBidderId && currentUserId === previousBestBidderId) {
              throw new Error("Vous êtes déjà le meilleur enchérisseur.");
         }
+        // Prevent bidding on own ad
+        if (ad.userId === currentUserId) {
+            throw new Error("Vous ne pouvez pas enchérir sur votre propre annonce.");
+        }
 
-        // --- 4. Validation des Paliers CdC (utilise la fonction importée) ---
-        const currentPrice = ad.price ?? 0;
+        const currentPrice = ad.bids[0]?.amount ?? ad.price ?? 0;
         const requiredIncrement = getRequiredIncrement(currentPrice);
         const minimumRequiredBid = currentPrice + requiredIncrement;
 
@@ -93,13 +106,6 @@ export async function placeBid(prevState: any, formData: FormData) {
             throw new Error(`L'enchère doit être d'au moins ${minimumRequiredBid} € (palier de ${requiredIncrement} €).`);
         }
         
-        const difference = bidAmount - currentPrice; 
-        
-        if (difference % requiredIncrement !== 0) {
-            throw new Error(`Votre augmentation doit être un multiple de ${requiredIncrement} €. (${difference.toFixed(2)} € proposé).`);
-        }
-        
-        // --- Création de l'enregistrement de l'enchère (bid) ---
         await prisma.bid.create({
             data: {
                 amount: bidAmount,
@@ -108,23 +114,20 @@ export async function placeBid(prevState: any, formData: FormData) {
             }
         });
 
-        
-        
+        // Time extension logic
         const now = new Date();
         const ONE_HOUR_MS = 60 * 60 * 1000;
         const TWO_HOURS_MS = 2 * 60 * 60 * 1000; 
         
         let newEndDate = ad.endDate; 
-        let isExtended = false; // Drapeau pour la notification
+        let isExtended = false;
         
-        // Si le temps restant est inférieur à 1 heure (60 minutes)
         if (ad.endDate.getTime() - now.getTime() < ONE_HOUR_MS) {
             newEndDate = new Date(now.getTime() + TWO_HOURS_MS); 
             isExtended = true;
-            console.log(`[H-1 Trigger] Prolongation de l'enchère : nouvelle date de fin à ${newEndDate.toLocaleString()}`);
         }
         
-        // Mise à jour du Prix de l'Annonce et de la Date de Fin
+        // Update Ad Price & End Date
         await prisma.ad.update({
             where: { id: adId },
             data: { 
@@ -134,146 +137,230 @@ export async function placeBid(prevState: any, formData: FormData) {
         });
 
         const adLink = `/ad/${adId}`;
-
         
-        
-        // A) Notification à l'ancien meilleur enchérisseur (s'il y en avait un)
+        // Notifications
         if (previousBestBidderId && previousBestBidderId !== currentUserId) {
-            const message = `⚠️ Vous avez été surenchéri sur l'annonce "${ad.title}". Le nouveau prix est ${bidAmount} €.`;
-            await createNotification(previousBestBidderId, message, adLink);
+            await createNotification(previousBestBidderId, `⚠️ Surenchère sur "${ad.title}". Nouveau prix: ${bidAmount} €.`, adLink);
         }
-
-        // B) Notification au vendeur (l'utilisateur qui a posté l'annonce)
-        const sellerMessage = isExtended
-            ? `🎉 Nouvelle enchère à ${bidAmount} € sur votre annonce "${ad.title}". L'enchère a été prolongée de 2 heures.`
-            : `🎉 Nouvelle enchère à ${bidAmount} € sur votre annonce "${ad.title}".`;
-            
-        await createNotification(ad.userId, sellerMessage, adLink);
+        await createNotification(ad.userId, isExtended ? `🎉 Nouvelle enchère (${bidAmount} €) et prolongation !` : `🎉 Nouvelle enchère (${bidAmount} €).`, adLink);
 
         revalidatePath(adLink);
         return { success: true, message: "Enchère placée avec succès !" };
 
-    } catch (error) {
-        let errorMessage = "Une erreur inconnue est survenue.";
-        if (error instanceof Error) {
-            errorMessage = error.message;
-        } else if (typeof error === 'string') {
-            errorMessage = error;
-        }
-
-        console.error("Erreur lors de l'enchère:", errorMessage);
-        
-        return { 
-            success: false, 
-            message: errorMessage
-        };
+    } catch (error: unknown) {
+        console.error("Erreur enchère:", error);
+        const errorMessage = error instanceof Error ? error.message : "Erreur inconnue.";
+        return { success: false, message: errorMessage };
     }
 }
 
+
 /**
- * Gère l'achat immédiat pour les annonces de type SALE.
+ * Ajoute au panier (Réservation de 10 minutes)
  */
 export async function buyNow(adId: number) {
     const session = await auth();
     if (!session?.user) return { message: "Connectez-vous pour acheter." };
-    if (session.user.role !== 'PRO') return { message: "Réservé aux pros." };
+    // if (session.user.role !== 'PRO') return { message: "Réservé aux pros." };
 
-    const ad = await prisma.ad.findUnique({
-        where: { id: adId },
-        select: {
-            id: true,
-            type: true,
-            status: true,
-            userId: true,
-            title: true,
-            price: true,
-        },
-    });
-    if (!ad) return { message: "Introuvable." };
-    if (ad.type !== 'SALE') return { message: "Pas en vente directe." };
-    if (ad.status !== 'ACTIVE') return { message: "Déjà vendu ou inactif." };
-    if (ad.userId === Number(session.user.id)) return { message: "Vous ne pouvez pas acheter votre propre annonce." };
+    // --- CONFLICT RESOLUTION START ---
+    // We merged the definition of userId/now with the validation logic inside the transaction.
+    const userId = Number(session.user.id);
+    const now = new Date();
+    // --- CONFLICT RESOLUTION END ---
 
-    await prisma.ad.update({
-        where: { id: adId },
-        data: {
-            status: 'SOLD',
-            buyerId: Number(session.user.id),
-        }
-    });
+    try {
+        await prisma.$transaction(async (tx) => {
+            const ad = await tx.ad.findUnique({ where: { id: adId } });
+            
+            if (!ad) throw new Error("Introuvable.");
+            if (ad.type !== 'SALE') throw new Error("Pas en vente directe.");
+            if (ad.status !== 'ACTIVE' && ad.status !== 'PENDING') throw new Error("Non disponible (déjà vendu ou inactif).");
+            
+            // Self-purchase check (Merged from origin/main logic)
+            if (ad.userId === userId) throw new Error("Vous ne pouvez pas acheter votre propre annonce.");
+            
+            // Verify user exists to prevent FK error
+            const userExists = await tx.user.findUnique({ where: { id: userId } });
+            if (!userExists) throw new Error("Utilisateur introuvable. Veuillez vous reconnecter.");
+            
+            // Reservation check
+            if (ad.reservedUntil && ad.reservedUntil > now && ad.reservedById !== userId) {
+                throw new Error("Cet article est réservé par un autre utilisateur.");
+            }
+
+            // Set reservation
+            const reservedUntil = new Date(now.getTime() + 10 * 60000); // 10 minutes
+            await tx.ad.update({
+                where: { id: adId },
+                data: {
+                    reservedUntil,
+                    reservedById: userId,
+                    // status: 'PENDING' // Optional
+                }
+            });
+        });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : "Erreur inconnue";
+        return { message };
+    }
 
     revalidatePath(`/ad/${adId}`);
-    return { message: "Achat confirmé !" };
+    return { message: "Article ajouté au panier (réservé 10 min). Allez dans 'Mes Achats' pour payer." };
 }
 
 
-//notif de cloture des enchères expirées
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function confirmPurchase(adId: number, prevState: any, formData: FormData) {
+    const session = await auth();
+    if (!session?.user) return { success: false, message: "Non connecté" };
+    
+    const userId = Number(session.user.id);
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    
+    if (!user?.stripeCustomerId) return { success: false, message: "Aucun moyen de paiement." };
+    
+    // Check Stripe PM
+    const paymentMethods = await stripe.paymentMethods.list({ customer: user.stripeCustomerId, type: 'card' });
+    if (paymentMethods.data.length === 0) return { success: false, message: "Ajoutez une carte bancaire." };
+
+    try {
+        await prisma.$transaction(async (tx) => {
+             const ad = await tx.ad.findUnique({ where: { id: adId } });
+             if (!ad) throw new Error("Annonce introuvable");
+             
+             // Check if reserved by user
+             if (ad.reservedById !== userId && (!ad.reservedUntil || ad.reservedUntil < new Date())) {
+                 if (ad.status === 'SOLD') throw new Error("Déjà vendu.");
+                 if (ad.reservedUntil && ad.reservedUntil > new Date() && ad.reservedById !== userId) throw new Error("Réservé par un autre.");
+             }
+
+             // Charge Stripe
+             const paymentIntent = await stripe.paymentIntents.create({
+                 amount: Math.round((ad.price || 0) * 100),
+                 currency: 'eur',
+                 customer: user.stripeCustomerId!,
+                 payment_method: paymentMethods.data[0].id,
+                 off_session: true,
+                 confirm: true,
+             });
+
+             await tx.ad.update({
+                 where: { id: adId },
+                 data: {
+                      status: 'SOLD',
+                      buyerId: userId,
+                      reservedUntil: null,
+                      reservedById: null
+                 }
+             });
+        });
+        
+        revalidatePath('/dashboard/purchases');
+        return { success: true, message: "Paiement validé !" };
+        
+    } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : "Erreur inconnue";
+        return { success: false, message: "Echec paiement: " + errorMessage };
+    }
+}
+
+
+
+// notif de cloture des enchères expirées
 export async function closeExpiredAuctions() {
     console.log("Démarrage de la tâche de clôture des enchères expirées...");
     
+    const now = new Date();
     // 1. Trouver toutes les annonces actives de type AUCTION dont la date de fin est passée
     const expiredAds = await prisma.ad.findMany({
         where: {
             type: 'AUCTION',
-            status: 'ACTIVE',
+            status: { in: ['ACTIVE', 'PENDING'] },
             endDate: {
-                lt: new Date(), 
+                lte: now, 
             },
         },
         include: {
-            // Récupérer la meilleure enchère s'il y en a une
             bids: {
                 orderBy: { amount: 'desc' },
                 take: 1,
             },
-            user: true, // Le vendeur (user)
+            user: true, // Le vendeur
         },
     });
 
     if (expiredAds.length === 0) {
-        console.log("Aucune enchère expirée trouvée.");
         return { success: true, message: "Aucune enchère à clôturer." };
     }
 
     console.log(`Clôture de ${expiredAds.length} enchère(s)...`);
 
     for (const ad of expiredAds) {
-        const winningBid = ad.bids[0]; // La meilleure enchère, ou undefined
+        const winningBid = ad.bids[0];
         const adLink = `/ad/${ad.id}`;
 
         if (winningBid) {
-            // 2. CAS 1: GAGNANT TROUVÉ (SOLD)
+            // 2. CAS 1: GAGNANT TROUVÉ
             const winnerId = winningBid.userId;
 
-            // Mise à jour de l'annonce
+            // TENTATIVE DE PAIEMENT STRIPE
+            let paymentStatus = 'FAILED';
+            try {
+                const winner = await prisma.user.findUnique({ where: { id: winnerId } });
+                if (winner && winner.stripeCustomerId) {
+                     const paymentMethods = await stripe.paymentMethods.list({ customer: winner.stripeCustomerId, type: 'card' });
+                     if (paymentMethods.data.length > 0) {
+                          await stripe.paymentIntents.create({
+                                amount: Math.round(winningBid.amount * 100),
+                                currency: 'eur',
+                                customer: winner.stripeCustomerId,
+                                payment_method: paymentMethods.data[0].id,
+                                off_session: true,
+                                confirm: true,
+                                metadata: {
+                                    adId: ad.id.toString(),
+                                    userId: winnerId.toString(),
+                                    type: 'AUCTION_WIN'
+                                }
+                          });
+                          paymentStatus = 'PAID';
+                     }
+                }
+            } catch (e: unknown) {
+                console.error(`Erreur paiement enchère ${ad.id}:`, e);
+            }
+
             await prisma.ad.update({
                 where: { id: ad.id },
                 data: {
                     status: 'SOLD',
-                    buyerId: winnerId, // Attribuer l'acheteur
+                    buyerId: winnerId, 
                 },
             });
 
-            // 💡 NOTIFICATION DE FIN D'ENCHÈRE (Gagnant)
-            const winnerMessage = `🥳 Félicitations ! Vous avez remporté l'enchère pour "${ad.title}" au prix de ${winningBid.amount} €.`;
+            // NOTIFICATIONS
+            const winnerMessage = paymentStatus === 'PAID' 
+                ? `🥳 Vous avez remporté "${ad.title}" ! Votre carte a été débitée de ${winningBid.amount} €.`
+                : `🥳 Vous avez remporté "${ad.title}" ! Le paiement automatique a échoué, merci de régulariser.`;
+                
             await createNotification(winnerId, winnerMessage, adLink);
 
-            // 💡 NOTIFICATION DE FIN D'ENCHÈRE (Vendeur - Vendu)
-            const sellerMessage = `✅ Votre annonce "${ad.title}" a été clôturée et vendue à ${winningBid.amount} €.`;
+            const sellerMessage = paymentStatus === 'PAID'
+                ? `✅ Votre annonce "${ad.title}" est vendue et payée (${winningBid.amount} €).`
+                : `✅ Votre annonce "${ad.title}" est vendue (${winningBid.amount} €) (Paiement en attente/échec).`;
+                
             await createNotification(ad.userId, sellerMessage, adLink);
 
             revalidatePath(adLink);
 
         } else {
-            // 3. CAS 2: AUCUNE ENCHÈRE PLACÉE (EXPIRED)
+            // 3. CAS 2: AUCUNE ENCHÈRE
             await prisma.ad.update({
                 where: { id: ad.id },
-                data: {
-                    status: 'EXPIRED', // L'annonce n'a pas trouvé preneur
-                },
+                data: { status: 'EXPIRED' },
             });
 
-            // 💡 NOTIFICATION DE FIN D'ENCHÈRE (Vendeur - Expiré)
             const sellerMessage = `❌ Votre annonce "${ad.title}" est expirée sans aucune offre.`;
             await createNotification(ad.userId, sellerMessage, adLink);
             
@@ -281,78 +368,5 @@ export async function closeExpiredAuctions() {
         }
     }
 
-    return { success: true, message: `${expiredAds.length} enchère(s) clôturée(s) avec succès.` };
+    return { success: true, message: `${expiredAds.length} enchère(s) traitée(s).` };
 }
-
-/*export async function submitOfferForSale(adId: number, amount: number) {
-    const session = await auth();
-
-    if (!session?.user || !session.user.id) {
-        return { success: false, message: "Non authentifié" };
-    }
-
-    const userId = Number(session.user.id);
-    
-    // Le CdC stipule que seuls les Pros peuvent acheter/enchérir, nous conservons cette vérification.
-    if (session.user.role !== 'PRO') {
-        return { success: false, message: "Seuls les professionnels peuvent soumettre une offre de prix." };
-    }
-
-    if (amount <= 0 || isNaN(amount)) {
-        return { success: false, message: "Veuillez saisir un montant d'offre valide." };
-    }
-
-    try {
-        const ad = await prisma.ad.findUnique({
-            where: { id: adId },
-            select: { 
-                userId: true, 
-                type: true, 
-                status: true,
-                title: true,
-                price: true
-            }
-        });
-
-        if (!ad) {
-            return { success: false, message: "Annonce introuvable." };
-        }
-        // Cette fonction ne concerne que les annonces en vente directe actives.
-        if (ad.type !== 'SALE' || ad.status !== 'ACTIVE') {
-            return { success: false, message: "Cette annonce n'accepte pas d'offres de prix actuellement." };
-        }
-        if (ad.userId === userId) {
-            return { success: false, message: "Vous ne pouvez pas faire d'offre sur votre propre annonce." };
-        }
-        
-        // --- Enregistrement de l'offre (Bid) ---
-        // Le cast 'as any' est ajouté pour éviter les problèmes de typage persistants de Prisma
-        await (prisma as any).bid.create({
-            data: {
-                amount: amount,
-                adId: adId,
-                userId: userId,
-                // On peut ajouter un flag ici si vous voulez distinguer les offres sur SALE des enchères AUCTION
-                // Par exemple: type: 'OFFER' (si vous ajoutez un champ type à votre modèle Bid)
-            },
-        });
-
-        const adLink = `/ad/${adId}`;
-        
-        // Notification au vendeur (Particulier)
-        const sellerMessage = `🔔 Nouvelle offre de ${amount} € reçue sur votre annonce "${ad.title}". Consultez votre tableau de bord.`;
-        await createNotification(ad.userId, sellerMessage, adLink);
-
-        // Revalidation pour que le dashboard du vendeur se mette à jour
-        revalidatePath(adLink);
-        revalidatePath('/dashboard/ads');
-        
-        return { success: true, message: "Votre offre a été soumise au vendeur. Il peut l'accepter ou la refuser." };
-
-    } catch (error) {
-        console.error("Erreur lors de la soumission de l'offre:", error);
-        return { success: false, message: "Erreur serveur lors de la soumission de l'offre." };
-    }
-}
-
-*/

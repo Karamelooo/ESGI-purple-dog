@@ -43,15 +43,17 @@ model User {
   // Pro fields
   companyName   String?
   siret         String?
-  specialties   String?
-
+  specialties   String?        // JSON or comma-separated
+  
+  stripeCustomerId String?
   // Relations
   ads           Ad[]
   bids          Bid[]
   notifications Notification[]
   messages      Message[]
   purchases     Ad[]           @relation("BuyerAds")
-  reviewsWritten  Review[]     @relation("ReviewsWritten")
+  reservedAds   Ad[]           @relation("ReservedAds")
+  reviewsWritten Review[]      @relation("ReviewsWritten")
   reviewsReceived Review[]     @relation("ReviewsReceived")
 }
 
@@ -106,7 +108,11 @@ model Ad {
 
   buyerId     Int?
   buyer       User?     @relation("BuyerAds", fields: [buyerId], references: [id])
-
+  
+  // Cart Reservation
+  reservedUntil DateTime?
+  reservedById  Int?
+  reservedBy    User?     @relation("ReservedAds", fields: [reservedById], references: [id])
   bids        Bid[]
   messages    Message[]
   transactions Transaction[]

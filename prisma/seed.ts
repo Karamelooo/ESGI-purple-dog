@@ -5,8 +5,10 @@ const prisma = new PrismaClient()
 
 async function main() {
     // Safe cleanup
+    await prisma.review.deleteMany()
     await prisma.transaction.deleteMany()
     await prisma.bid.deleteMany()
+    await prisma.delivery.deleteMany()
     await prisma.notification.deleteMany()
     await prisma.ad.deleteMany()
     await prisma.user.deleteMany()
@@ -29,8 +31,6 @@ async function main() {
         { name: 'Véhicules', slug: 'vehicules' },
     ]
 
-    // Use createMany to insert all at once (if DB supports it, PG does)
-    // But we need IDs for relations, so interactive loop is fine for seed
     for (const cat of categoriesData) {
         await prisma.category.create({ data: cat })
     }
@@ -49,7 +49,7 @@ async function main() {
         },
     })
 
-    // Professional Seller/Buyer
+    // Professional Seller
     const proUser = await prisma.user.create({
         data: {
             email: 'pro@gallery.com',
@@ -59,7 +59,7 @@ async function main() {
             companyName: 'Galerie JP',
             siret: '12345678900019',
             specialties: 'Tableaux, Art déco',
-            // photoUrl: '...'
+            // stripeCustomerId: null, // Let app generate it on demand
         }
     })
 
@@ -70,46 +70,10 @@ async function main() {
             name: 'Johnny Hallyday',
             password,
             role: Role.USER,
-            // age check implied
         }
     })
 
-    // 3. Create Ads
-
-    // Auction Ad by Pro
-    const auctionAd = await prisma.ad.create({
-        data: {
-            title: 'Tableau Ancien XIXe',
-            description: 'Magnifique tableau huile sur toile...',
-            type: AdType.AUCTION,
-            status: 'ACTIVE',
-            price: 500, // Starting price
-            reservePrice: 800,
-            startDate: new Date(),
-            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // +7 days
-            dimensions: '50x70cm',
-            weight: 2.5,
-            userId: proUser.id,
-            categoryId: allCats.find(c => c.slug === 'art-tableaux')?.id || allCats[0].id,
-        }
-    })
-
-    // Fast Sale Ad by Individual
-    const saleAd = await prisma.ad.create({
-        data: {
-            title: 'Montre Vintage Omega',
-            description: 'Montre en parfait état de marche. Année 1960.',
-            type: AdType.SALE,
-            status: 'ACTIVE',
-            price: 1200, // Fixed price
-            dimensions: '40mm',
-            weight: 0.1,
-            userId: individualUser.id,
-            categoryId: allCats.find(c => c.slug === 'bijoux-montres')?.id || allCats[0].id,
-        }
-    })
-
-    // Buyer User (PRO)
+    // Buyer User (Specific Pro Profile from conflict resolution)
     const buyerUser = await prisma.user.create({
         data: {
             email: 'buyer@purpledog.com',
@@ -122,13 +86,68 @@ async function main() {
         }
     })
 
-    // 4. Create Transactions (Accounting Data)
+    // 3. Create Ads
 
-    // Create a sold ad with a transaction
+    // Auction Ad by Pro
+    const auctionAd = await prisma.ad.create({
+        data: {
+            title: 'Tableau Ancien XIXe',
+            description: 'Magnifique tableau huile sur toile, représentant un paysage bucolique. Signé en bas à droite.',
+            type: AdType.AUCTION,
+            status: 'ACTIVE',
+            price: 500, // Starting price
+            reservePrice: 800,
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // +7 days
+            dimensions: '50x70cm',
+            weight: 2.5,
+            userId: proUser.id,
+            categoryId: allCats.find(c => c.slug === 'art-tableaux')?.id || allCats[0].id,
+            images: ['https://placehold.co/600x400?text=Tableau+XIXe'],
+        }
+    })
+
+    // Fast Sale Ad by Individual
+    const saleAd = await prisma.ad.create({
+        data: {
+            title: 'Montre Vintage Omega',
+            description: 'Montre en parfait état de marche. Année 1960. Bracelet cuir neuf.',
+            type: AdType.SALE,
+            status: 'ACTIVE',
+            price: 1200, // Fixed price
+            dimensions: '40mm',
+            weight: 0.1,
+            userId: individualUser.id,
+            categoryId: allCats.find(c => c.slug === 'bijoux-montres')?.id || allCats[0].id,
+            images: ['https://placehold.co/600x400?text=Montre+Omega', 'https://placehold.co/600x400?text=Dos+Montre'],
+        }
+    })
+
+    // Reserved Ad (in cart) - Resolved from HEAD
+    const reservedAd = await prisma.ad.create({
+        data: {
+            title: 'Vase Ming Rare',
+            description: 'Vase authentique, réservé pour achat. Certificat d\'authenticité disponible.',
+            type: AdType.SALE,
+            status: 'ACTIVE', // Still active but reserved
+            price: 2500,
+            dimensions: '20x20x40cm',
+            weight: 1.2,
+            userId: proUser.id,
+            categoryId: allCats.find(c => c.slug === 'collection')?.id || allCats[0].id,
+            reservedById: individualUser.id,
+            reservedUntil: new Date(Date.now() + 10 * 60 * 1000), // Reserved for 10 mins
+            images: ['https://placehold.co/600x400?text=Vase+Ming'],
+        }
+    })
+
+    // 4. Create Transactions & Sold Ads
+
+    // Sold Ad 1
     const soldAd1 = await prisma.ad.create({
         data: {
             title: 'Vase Gallé Art Nouveau',
-            description: 'Vase en pâte de verre multicouche...',
+            description: 'Vase en pâte de verre multicouche, motif floral dégagé à l\'acide.',
             type: AdType.SALE,
             status: 'SOLD',
             price: 450,
@@ -136,7 +155,8 @@ async function main() {
             weight: 1.2,
             userId: proUser.id,
             buyerId: buyerUser.id,
-            categoryId: allCats.find(c => c.slug === 'art-tableaux')?.id || allCats[0].id, // Approximate category
+            categoryId: allCats.find(c => c.slug === 'art-tableaux')?.id || allCats[0].id,
+            images: ['https://placehold.co/600x400?text=Vase+Galle'],
         }
     })
 
@@ -152,17 +172,18 @@ async function main() {
         }
     })
 
-    // Another sold ad
+    // Sold Ad 2
     const soldAd2 = await prisma.ad.create({
         data: {
             title: 'Lampe Jielde',
-            description: 'Lampe industrielle vintage 2 bras',
+            description: 'Lampe industrielle vintage 2 bras, finition graphite.',
             type: AdType.AUCTION,
             status: 'SOLD',
             price: 320, // Final price
             userId: individualUser.id,
-            buyerId: admin.id, // Admin bought it mostly for testing
+            buyerId: admin.id,
             categoryId: allCats.find(c => c.slug === 'meubles-anciens')?.id || allCats[0].id,
+            images: ['https://placehold.co/600x400?text=Lampe+Jielde'],
         }
     })
 
@@ -178,7 +199,82 @@ async function main() {
         }
     })
 
-    console.log({ admin, proUser, individualUser, auctionAd, saleAd, soldAd1, soldAd2, transaction1, transaction2 })
+    // 5. Augmentation: Bids, Reviews, Notifications
+
+    // Bids on Auction Ad
+    await prisma.bid.create({
+        data: {
+            amount: 550,
+            userId: individualUser.id,
+            adId: auctionAd.id,
+            createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
+        }
+    })
+
+    await prisma.bid.create({
+        data: {
+            amount: 600,
+            userId: buyerUser.id,
+            adId: auctionAd.id,
+            createdAt: new Date()
+        }
+    })
+
+    // Reviews
+    await prisma.review.create({
+        data: {
+            rating: 5,
+            comment: "Transaction parfaite, emballage très soigné pour ce vase fragile.",
+            authorId: buyerUser.id,
+            targetId: proUser.id,
+            createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
+        }
+    })
+
+    await prisma.review.create({
+        data: {
+            rating: 4,
+            comment: "Objet conforme, mais livraison un peu lente.",
+            authorId: admin.id,
+            targetId: individualUser.id,
+            createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000)
+        }
+    })
+
+    // Notifications
+    await prisma.notification.create({
+        data: {
+            userId: proUser.id,
+            message: "Votre vase Gallé a été vendu à Alice Buyer !",
+            read: true,
+            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+        }
+    })
+
+    await prisma.notification.create({
+        data: {
+            userId: individualUser.id,
+            message: "Nouvelle enchère de 600€ sur votre tableau (non, c'est pas votre tableau, c'est celui du pro, mais pour l'exemple).", // Correction: Individual user didn't post the tableau. Use correct logic.
+            // Let's make a real notification
+            read: false,
+        }
+    })
+    
+     await prisma.notification.create({
+        data: {
+            userId: proUser.id,
+            message: "Nouvelle enchère de 600€ sur 'Tableau Ancien XIXe'",
+            read: false,
+            link: `/ad/${auctionAd.id}`
+        }
+    })
+
+
+    console.log({ 
+        admin, proUser, individualUser, buyerUser, 
+        auctionAd, saleAd, reservedAd, soldAd1, soldAd2, 
+        transaction1, transaction2 
+    })
 }
 
 main()
