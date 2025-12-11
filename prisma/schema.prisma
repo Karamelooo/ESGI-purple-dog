@@ -48,6 +48,7 @@ model User {
   ads           Ad[]
   bids          Bid[]
   notifications Notification[]
+  messages Message[]
   purchases     Ad[]           @relation("BuyerAds")
 }
 
@@ -97,7 +98,7 @@ model Ad {
   buyer       User?     @relation("BuyerAds", fields: [buyerId], references: [id])
   
   bids        Bid[]
-
+  messages     Message[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -128,5 +129,23 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id])
   
   createdAt DateTime @default(now())
+}
+
+// Dans schema.prisma
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  // Relations
+  adId      Int
+  ad        Ad       @relation(fields: [adId], references: [id])
+
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+
+  // Ajout d'un index pour optimiser les requêtes
+  @@index([adId])
 }
 

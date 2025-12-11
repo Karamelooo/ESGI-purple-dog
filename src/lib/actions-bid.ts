@@ -273,3 +273,75 @@ export async function closeExpiredAuctions() {
     return { success: true, message: `${expiredAds.length} enchère(s) clôturée(s) avec succès.` };
 }
 
+/*export async function submitOfferForSale(adId: number, amount: number) {
+    const session = await auth();
+
+    if (!session?.user || !session.user.id) {
+        return { success: false, message: "Non authentifié" };
+    }
+
+    const userId = Number(session.user.id);
+    
+    // Le CdC stipule que seuls les Pros peuvent acheter/enchérir, nous conservons cette vérification.
+    if (session.user.role !== 'PRO') {
+        return { success: false, message: "Seuls les professionnels peuvent soumettre une offre de prix." };
+    }
+
+    if (amount <= 0 || isNaN(amount)) {
+        return { success: false, message: "Veuillez saisir un montant d'offre valide." };
+    }
+
+    try {
+        const ad = await prisma.ad.findUnique({
+            where: { id: adId },
+            select: { 
+                userId: true, 
+                type: true, 
+                status: true,
+                title: true,
+                price: true
+            }
+        });
+
+        if (!ad) {
+            return { success: false, message: "Annonce introuvable." };
+        }
+        // Cette fonction ne concerne que les annonces en vente directe actives.
+        if (ad.type !== 'SALE' || ad.status !== 'ACTIVE') {
+            return { success: false, message: "Cette annonce n'accepte pas d'offres de prix actuellement." };
+        }
+        if (ad.userId === userId) {
+            return { success: false, message: "Vous ne pouvez pas faire d'offre sur votre propre annonce." };
+        }
+        
+        // --- Enregistrement de l'offre (Bid) ---
+        // Le cast 'as any' est ajouté pour éviter les problèmes de typage persistants de Prisma
+        await (prisma as any).bid.create({
+            data: {
+                amount: amount,
+                adId: adId,
+                userId: userId,
+                // On peut ajouter un flag ici si vous voulez distinguer les offres sur SALE des enchères AUCTION
+                // Par exemple: type: 'OFFER' (si vous ajoutez un champ type à votre modèle Bid)
+            },
+        });
+
+        const adLink = `/ad/${adId}`;
+        
+        // Notification au vendeur (Particulier)
+        const sellerMessage = `🔔 Nouvelle offre de ${amount} € reçue sur votre annonce "${ad.title}". Consultez votre tableau de bord.`;
+        await createNotification(ad.userId, sellerMessage, adLink);
+
+        // Revalidation pour que le dashboard du vendeur se mette à jour
+        revalidatePath(adLink);
+        revalidatePath('/dashboard/ads');
+        
+        return { success: true, message: "Votre offre a été soumise au vendeur. Il peut l'accepter ou la refuser." };
+
+    } catch (error) {
+        console.error("Erreur lors de la soumission de l'offre:", error);
+        return { success: false, message: "Erreur serveur lors de la soumission de l'offre." };
+    }
+}
+
+*/

@@ -80,6 +80,7 @@ Les conteneurs auront le suffixe `-dev` (ex: `leboncoin-app-dev`). Pensez à ini
 ```bash
 docker exec leboncoin-app-dev npx prisma migrate dev
 docker exec leboncoin-app-dev npx prisma db seed
+
 ```
 
 ### 4. Initialiser la Base de Données
