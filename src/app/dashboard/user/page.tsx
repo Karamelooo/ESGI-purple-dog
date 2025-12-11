@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 export default async function UserDashboardPage() {
     const session = await auth();
-    const ads = await prisma.ad.findMany({
+    const ads: { id: number; title: string; createdAt: Date; status: string }[] = await prisma.ad.findMany({
         where: { userId: Number(session?.user?.id) },
         orderBy: { createdAt: 'desc' }
     });

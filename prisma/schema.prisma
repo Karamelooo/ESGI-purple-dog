@@ -28,7 +28,6 @@ enum AdType {
   SALE
 }
 
-
 model User {
   id            Int            @id @default(autoincrement())
   email         String         @unique
@@ -37,21 +36,21 @@ model User {
   role          Role           @default(USER)
   createdAt     DateTime       @default(now())
   isBlocked     Boolean        @default(false)
-  
+
   // Profile fields
   photoUrl      String?
-  
+
   // Pro fields
   companyName   String?
   siret         String?
   specialties   String?        // JSON or comma-separated
   
   stripeCustomerId String?
-  
   // Relations
   ads           Ad[]
   bids          Bid[]
   notifications Notification[]
+  messages      Message[]
   purchases     Ad[]           @relation("BuyerAds")
   reservedAds   Ad[]           @relation("ReservedAds")
   reviewsWritten Review[]      @relation("ReviewsWritten")
@@ -62,9 +61,11 @@ model Category {
   id    Int    @id @default(autoincrement())
   name  String @unique
   slug  String @unique
-  commissionRateBuyer Float?
+
+  commissionRateBuyer  Float?
   commissionRateSeller Float?
-  formConfig Json?      // Array of field definitions { label, type, required, options }
+  formConfig           Json?
+
   ads   Ad[]
 }
 
@@ -72,40 +73,39 @@ model Ad {
   id          Int      @id @default(autoincrement())
   title       String
   description String
-  
-  // Product Details
-  dimensions  String?  // stored as "LxWxH" or JSON
-  weight      Float?   // in kg
-  
+
+  // Details
+  dimensions  String?
+  weight      Float?
+
   // Images & Docs
-  images      String[] // Array of image URLs
-  documents   String[] // Array of document URLs
-  
+  images      String[]
+  documents   String[]
+
   // Location
   location    String?
-  
+
   // Status & Type
   status      AdStatus @default(PENDING)
   type        AdType
-  
-  // Pricing & Auction
-  price       Float?    // Buy now price for SALE, or Start price for AUCTION
-  reservePrice Float?   // Min price for auction
-  buyNowPrice Float?    // Optional buy now price for auction?
-  
+
+  // Pricing / Auction
+  price        Float?
+  reservePrice Float?
+  buyNowPrice  Float?
+
   startDate   DateTime  @default(now())
-  endDate     DateTime? // Required for auctions
-  
+  endDate     DateTime?
+
   // Relations
   categoryId  Int
-  category    Category  @relation(fields: [categoryId], references: [id])
-  
-  // Custom Attributes
+  category    Category @relation(fields: [categoryId], references: [id])
+
   customAttributes Json?
 
   userId      Int
   user        User      @relation(fields: [userId], references: [id])
-  
+
   buyerId     Int?
   buyer       User?     @relation("BuyerAds", fields: [buyerId], references: [id])
   
@@ -113,10 +113,10 @@ model Ad {
   reservedUntil DateTime?
   reservedById  Int?
   reservedBy    User?     @relation("ReservedAds", fields: [reservedById], references: [id])
-  
   bids        Bid[]
+  messages    Message[]
   transactions Transaction[]
-  delivery    Delivery?
+  delivery     Delivery?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -125,16 +125,16 @@ model Ad {
 model Bid {
   id        Int      @id @default(autoincrement())
   amount    Float
-  
+
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  
+  user      User @relation(fields: [userId], references: [id])
+
   adId      Int
-  ad        Ad       @relation(fields: [adId], references: [id])
-  
+  ad        Ad   @relation(fields: [adId], references: [id])
+
   isAutoBid Boolean  @default(false)
-  maxLimit  Float?   // For auto-bidding
-  
+  maxLimit  Float?
+
   createdAt DateTime @default(now())
 }
 
@@ -143,11 +143,25 @@ model Notification {
   message   String
   read      Boolean  @default(false)
   link      String?
-  
+
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  
+  user      User @relation(fields: [userId], references: [id])
+
   createdAt DateTime @default(now())
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  adId      Int
+  ad        Ad @relation(fields: [adId], references: [id])
+
+  userId    Int
+  user      User @relation(fields: [userId], references: [id])
+
+  @@index([adId])
 }
 
 model GlobalSettings {
@@ -161,13 +175,13 @@ model Review {
   id        Int      @id @default(autoincrement())
   rating    Int
   comment   String?
-  
+
   authorId  Int
-  author    User     @relation("ReviewsWritten", fields: [authorId], references: [id])
-  
+  author    User @relation("ReviewsWritten", fields: [authorId], references: [id])
+
   targetId  Int
-  target    User     @relation("ReviewsReceived", fields: [targetId], references: [id])
-  
+  target    User @relation("ReviewsReceived", fields: [targetId], references: [id])
+
   createdAt DateTime @default(now())
 }
 
@@ -175,37 +189,36 @@ model Transaction {
   id               Int      @id @default(autoincrement())
   amount           Float
   commissionAmount Float
-  type             String   // "PAIEMENT", "REMBOURSEMENT", "VIREMENT"
-  status           String   // "PENDING", "COMPLETED", "FAILED"
+  type             String
+  status           String
   stripePaymentId  String?
-  
+
   adId             Int
-  ad               Ad       @relation(fields: [adId], references: [id])
-  
+  ad               Ad @relation(fields: [adId], references: [id])
+
   createdAt        DateTime @default(now())
 }
 
 model Delivery {
   id             Int      @id @default(autoincrement())
-  status         String   // "PENDING", "SHIPPED", "DELIVERED"
+  status         String
   trackingNumber String?
   carrier        String?
-  
+
   adId           Int      @unique
   ad             Ad       @relation(fields: [adId], references: [id])
-  
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
 
-
 model DeliveryPlatform {
   id        Int      @id @default(autoincrement())
-  name      String   // Display name (e.g. "DHL Express")
-  slug      String   @unique // Internal ID (e.g. "dhl", "convelio")
+  name      String
+  slug      String   @unique
   isActive  Boolean  @default(false)
-  config    Json?    // Encrypted/Stored credentials { apiKey, secret, ... }
-  
+  config    Json?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

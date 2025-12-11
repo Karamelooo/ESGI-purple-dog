@@ -15,30 +15,45 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  const isPro = session.user.role === "PRO";
+  const { role, name } = session.user;
+  const isPro = role === "PRO";
+  const isAdmin = role === "ADMIN";
+  const isProOrAdmin = isPro || isAdmin;
+
+  // Chemin de base pour les liens du tableau de bord
+  const basePath = isPro ? "/dashboard/pro" : "/dashboard/user";
+
+  // Lien de feedback conditionnel pour les utilisateurs non-PRO
+  const feedbackLink = !isPro ? (
+    <Link href={`${basePath}/feedback`}>
+      <Button
+        variant="ghost"
+        className="w-full justify-start text-blue-600 hover:text-blue-700 font-semibold"
+      >
+        ⭐️ Donner mon avis
+      </Button>
+    </Link>
+  ) : null;
 
   return (
     <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
       <aside className="w-full md:w-64 shrink-0">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-24">
-          {/* 💡 CORRECTION DU DESIGN : Utilisation de flex et justify-between */}
           <div className="mb-6 flex items-start justify-between">
-            {/* Bloc Texte (Nom et Statut) */}
             <div className="flex flex-col">
-              <h2 className="font-bold text-lg mb-0">{session.user.name}</h2>
+              <h2 className="font-bold text-lg mb-0">{name}</h2>
               <p className="text-sm text-gray-500">
                 {isPro ? "Compte Professionnel" : "Compte Particulier"}
               </p>
             </div>
-
-            {/* Cloche de Notification */}
             <div className="shrink-0 pt-0.5">
               <NotificationBell />
             </div>
           </div>
 
           <nav className="flex flex-col gap-2">
-            <Link href={isPro ? "/dashboard/pro" : "/dashboard/user"}>
+            {/* Vue d'ensemble */}
+            <Link href={basePath}>
               <Button
                 variant="ghost"
                 className="w-full justify-start font-bold"
@@ -46,31 +61,51 @@ export default async function DashboardLayout({
                 Vue d&apos;ensemble
               </Button>
             </Link>
-            <Link href="/dashboard/ads">
+
+            {/* Mes annonces */}
+            <Link href={`${basePath}/ads`}>
               <Button variant="ghost" className="w-full justify-start">
                 Mes Annonces
               </Button>
             </Link>
-            <Link href="/dashboard/purchases">
+
+            {/* Mes Achats & Enchères (logique fusionnée) */}
+            <Link
+              href={isProOrAdmin ? `${basePath}/bi` : "/dashboard/purchases"}
+            >
               <Button variant="ghost" className="w-full justify-start">
-                {isPro ? "Mes Achats & Enchères" : "Mes Achats"}
+                {isProOrAdmin ? "Mes Achats & Enchères" : "Mes Achats"}
               </Button>
             </Link>
+
+            {/* Favoris */}
             <Link href="/dashboard/favorites">
               <Button variant="ghost" className="w-full justify-start">
                 Favoris
               </Button>
             </Link>
+
+            {/* Moyens de paiement */}
             <Link href="/dashboard/payment">
               <Button variant="ghost" className="w-full justify-start">
                 Moyens de paiement
               </Button>
             </Link>
-            <Link href="/dashboard/profile">
-              <Button variant="ghost" className="w-full justify-start">
-                Mon Profil
+
+            {/* Mon Profil & Sécurité */}
+            <Link href={`${basePath}/profile`}>
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-indigo-600 hover:text-indigo-700"
+              >
+                Mon Profil & Sécurité
               </Button>
             </Link>
+
+            {/* Lien de feedback */}
+            {feedbackLink}
+
+            {/* Déposer une annonce */}
             <Link href="/deposer-une-annonce">
               <Button className="w-full mt-4 bg-purple-700 hover:bg-purple-800 text-white font-bold">
                 + Déposer une annonce
