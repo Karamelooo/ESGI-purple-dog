@@ -76,38 +76,38 @@ export default function UserProfilePage() {
     return (
         <div className="mx-auto max-w-3xl p-6 bg-white rounded-xl shadow-2xl border border-gray-100">
             <h1 className="text-3xl font-extrabold mb-6 text-indigo-700 border-b pb-2">
-                Mon Profil Particulier ({userData.role})
+                Mon profil particulier ({userData.role})
             </h1>
             
             <Link href="/dashboard/user" className="mb-4 inline-block text-blue-600 hover:text-blue-800 font-medium transition-colors">
-                &larr; Retour au Dashboard
+                &larr; Retour au tableau de bord
             </Link>
 
             <div className="space-y-8 mt-6">
                 
                 {/* --- A. Informations Générales --- */}
                 <section className="p-4 border rounded-lg bg-indigo-50/50">
-                    <h2 className="text-xl font-semibold mb-3 text-indigo-800">Informations de Compte</h2>
+                    <h2 className="text-xl font-semibold mb-3 text-indigo-800">Informations de compte</h2>
                     <p className="text-gray-700"><strong>Email :</strong> {userData.email}</p>
                     <p className="text-gray-700"><strong>Rôle :</strong> {userData.role}</p>
                 </section>
 
                 {/* --- B. Mise à jour du Nom --- */}
                 <section>
-                    <h2 className="text-xl font-semibold mb-3 border-b pb-2 text-gray-800">Mettre à jour le Nom / Pseudo</h2>
+                    <h2 className="text-xl font-semibold mb-3 border-b pb-2 text-gray-800">Mettre à jour le nom</h2>
                     <FormUpdateName name={userData.name ?? ''} state={nameState} dispatch={dispatchName} />
                 </section>
                 
                 {/* --- C. Mise à jour du Mot de passe --- */}
                 <section>
-                    <h2 className="text-xl font-semibold mb-3 border-b pb-2 text-gray-800">Changer le Mot de Passe</h2>
+                    <h2 className="text-xl font-semibold mb-3 border-b pb-2 text-gray-800">Changer le mot de passe</h2>
                     <FormUpdatePassword state={passwordState} dispatch={dispatchPassword} />
                 </section>
 
                 {/* --- D. Gestion des Notifications (DÉSACTIVÉE) --- */}
                 <section>
                     <h2 className="text-xl font-semibold mb-3 border-b pb-2 text-gray-400">
-                        Préférences d'Email
+                        Préférences d'email
                     </h2>
                     <div className="p-3 border-l-4 border-yellow-500 rounded text-gray-600 bg-yellow-50">
                         Fonctionnalité de notification désactivée.
@@ -148,7 +148,7 @@ function FormUpdateName({ name, state, dispatch }: FormNameProps) {
                 type="submit"
                 className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-md"
             >
-                Enregistrer le Nom
+                Enregistrer le nom
             </button>
             {state.message && (
                 <p className={`text-sm font-medium ${state.success ? 'text-green-600' : 'text-red-600'}`}>
@@ -189,7 +189,7 @@ function FormUpdatePassword({ state, dispatch }: FormProps) {
                 type="submit"
                 className="bg-red-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-red-700 transition-colors shadow-md"
             >
-                Changer le Mot de Passe
+                Changer le mot de passe
             </button>
             {state.message && (
                 <p className={`text-sm font-medium ${state.success ? 'text-green-600' : 'text-red-600'}`}>

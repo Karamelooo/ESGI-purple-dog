@@ -74,7 +74,7 @@ export default async function DashboardLayout({
                         
                         <Link href={`${basePath}/profile`}> 
                             <Button variant="ghost" className="w-full justify-start text-indigo-600 hover:text-indigo-700">
-                                Mon Profil & Sécurité
+                                Mon profil et sécurité
                             </Button>
                         </Link>
                         

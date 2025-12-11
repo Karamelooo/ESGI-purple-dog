@@ -36,7 +36,7 @@ export default async function ProBidsPage() {
     if (!data || data.length === 0) {
         return (
             <div className="p-4 text-gray-700">
-                <h1 className="text-2xl font-bold mb-4">Mes Achats & Enchères</h1>
+                <h1 className="text-2xl font-bold mb-4">Mes achats et enchères</h1>
                 <p>Vous n'avez encore placé aucune enchère.</p>
             </div>
         );
@@ -44,17 +44,17 @@ export default async function ProBidsPage() {
 
     return (
         <div className="p-4">
-            <h1 className="text-2xl font-bold mb-6">Mes Achats & Enchères</h1>
+            <h1 className="text-2xl font-bold mb-6">Mes achats et enchères</h1>
 
             <div className="overflow-x-auto bg-white border border-gray-200 rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Annonce</th>
-                            <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Votre Meilleure Offre</th>
-                            <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Prix Actuel / Gagnant</th>
+                            <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Votre meilleure offre</th>
+                            <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Prix actuel / gagnant</th>
                             <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Statut</th>
-                            <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Fin de l'Enchère</th>
+                            <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Fin de l'enchère</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">

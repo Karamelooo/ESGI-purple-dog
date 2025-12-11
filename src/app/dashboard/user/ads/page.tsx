@@ -42,7 +42,7 @@ export default async function UserAdsPage() {
             <div className="p-6 bg-white rounded-xl shadow-lg"> 
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold text-gray-800">
-                        Mes Annonces En Ligne ({ads.length})
+                        Mes annonces en ligne ({ads.length})
                     </h1>
                     <Link href="/deposer-une-annonce">
                         <Button className="bg-purple-600 hover:bg-purple-700 text-white font-medium flex items-center space-x-1">
