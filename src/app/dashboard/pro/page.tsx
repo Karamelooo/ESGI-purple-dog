@@ -108,23 +108,30 @@ export default async function ProDashboardPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-bold ${
-                          ad.status === "ACTIVE"
-                            ? "bg-green-100 text-green-700"
-                            : ad.status === "SOLD"
+                        className={`px-2 py-1 rounded-full text-xs font-bold ${ad.status === "ACTIVE"
+                          ? "bg-green-100 text-green-700"
+                          : ad.status === "SOLD"
                             ? "bg-blue-100 text-blue-700"
                             : "bg-red-100 text-red-700"
-                        }`}
+                          }`}
                       >
                         {ad.status}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Link href={`/ad/${ad.id}`}>
-                        <Button variant="ghost" size="sm">
-                          Gérer / Voir
-                        </Button>
-                      </Link>
+                      {ad.status === 'SOLD' ? (
+                        <Link href={`/dashboard/ads/management/${ad.id}`}>
+                          <Button variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                            Gérer Vente
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Link href={`/ad/${ad.id}`}>
+                          <Button variant="ghost" size="sm">
+                            Gérer / Voir
+                          </Button>
+                        </Link>
+                      )}
                     </td>
                   </tr>
                 ))}

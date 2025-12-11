@@ -259,8 +259,8 @@ async function main() {
             read: false,
         }
     })
-    
-     await prisma.notification.create({
+
+    await prisma.notification.create({
         data: {
             userId: proUser.id,
             message: "Nouvelle enchère de 600€ sur 'Tableau Ancien XIXe'",
@@ -270,10 +270,10 @@ async function main() {
     })
 
 
-    console.log({ 
-        admin, proUser, individualUser, buyerUser, 
-        auctionAd, saleAd, reservedAd, soldAd1, soldAd2, 
-        transaction1, transaction2 
+    console.log({
+        admin, proUser, individualUser, buyerUser,
+        auctionAd, saleAd, reservedAd, soldAd1, soldAd2,
+        transaction1, transaction2
     })
 }
 

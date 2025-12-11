@@ -25,22 +25,22 @@ export async function POST(req: Request) {
 
 
   if (event.type === 'setup_intent.succeeded') {
-      const setupIntent = event.data.object as Stripe.SetupIntent;
-      // We could mark user as "payment method verified" here if we had a flag for it.
-      // For now, checks are done at bid time using Stripe API to see if valid PM exists.
-      console.log(`SetupIntent succeeded for customer ${setupIntent.customer}`);
+    const setupIntent = event.data.object as Stripe.SetupIntent;
+    // We could mark user as "payment method verified" here if we had a flag for it.
+    // For now, checks are done at bid time using Stripe API to see if valid PM exists.
+
   }
 
   if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      const adId = paymentIntent.metadata.adId;
-      
-      if (adId) {
-          await prisma.ad.update({
-              where: { id: parseInt(adId) },
-              data: { status: 'SOLD' }
-          });
-      }
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+    const adId = paymentIntent.metadata.adId;
+
+    if (adId) {
+      await prisma.ad.update({
+        where: { id: parseInt(adId) },
+        data: { status: 'SOLD' }
+      });
+    }
   }
 
   return new NextResponse(null, { status: 200 });

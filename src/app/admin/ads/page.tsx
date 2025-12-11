@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { MoreHorizontal, ExternalLink } from "lucide-react";
 import Link from "next/link";
-// import { Button } from "@/components/ui/button"; // Optional
+
 
 export default async function AdminAdsPage() {
     const session = await auth();

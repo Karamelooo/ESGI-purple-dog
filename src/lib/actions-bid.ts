@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { getRequiredIncrement } from "@/lib/actions-rules"; 
+import { getRequiredIncrement } from "@/lib/actions-rules";
 import { stripe } from "@/lib/stripe";
 import { redirect } from 'next/navigation';
 
@@ -37,25 +37,25 @@ export type BidState = {
 
 // --- Actions ---
 
-export async function placeBid(prevState: BidState, formData: FormData) { 
-    
+export async function placeBid(prevState: BidState, formData: FormData) {
+
     try {
         const amountInput = formData.get('amount');
-        const adIdInput = formData.get('adId'); 
-        
+        const adIdInput = formData.get('adId');
+
         if (amountInput == null || adIdInput == null) {
-             throw new Error("Données de formulaire incomplètes. Veuillez réessayer.");
+            throw new Error("Données de formulaire incomplètes. Veuillez réessayer.");
         }
-        
+
         const bidAmount = parseFloat(String(amountInput));
-        const adId = Number(adIdInput); 
-        
+        const adId = Number(adIdInput);
+
         if (isNaN(bidAmount) || bidAmount <= 0) {
             throw new Error("Veuillez saisir un montant d'enchère valide (un nombre positif).");
         }
-        
+
         const session = await auth();
-        
+
         if (!session?.user || !session.user.id) {
             throw new Error("Vous devez être connecté pour enchérir.");
         }
@@ -66,32 +66,32 @@ export async function placeBid(prevState: BidState, formData: FormData) {
         }
 
         // STRIPE CHECK
-        const user = await prisma.user.findUnique({ where: { id: currentUserId }});
+        const user = await prisma.user.findUnique({ where: { id: currentUserId } });
         if (!user?.stripeCustomerId) {
-             return { success: false, message: "Veuillez ajouter un moyen de paiement dans votre profil avant d'enchérir." };
+            return { success: false, message: "Veuillez ajouter un moyen de paiement dans votre profil avant d'enchérir." };
         }
         const paymentMethods = await stripe.paymentMethods.list({ customer: user.stripeCustomerId, type: 'card' });
         if (paymentMethods.data.length === 0) {
-             return { success: false, message: "Veuillez ajouter une carte bancaire valide dans votre profil." };
+            return { success: false, message: "Veuillez ajouter une carte bancaire valide dans votre profil." };
         }
 
         const ad = await prisma.ad.findUnique({
             where: { id: adId },
-            include: { 
-                bids: { 
-                    orderBy: { amount: 'desc' }, 
-                    take: 1 
-                } 
+            include: {
+                bids: {
+                    orderBy: { amount: 'desc' },
+                    take: 1
+                }
             }
         });
 
         if (!ad) throw new Error("Annonce introuvable.");
         if (ad.type !== 'AUCTION' || ad.status !== 'ACTIVE') throw new Error("Enchère non active.");
         if (!ad.endDate) throw new Error("Date de fin manquante.");
-        
+
         const previousBestBidderId = ad.bids?.[0]?.userId;
         if (previousBestBidderId && currentUserId === previousBestBidderId) {
-             throw new Error("Vous êtes déjà le meilleur enchérisseur.");
+            throw new Error("Vous êtes déjà le meilleur enchérisseur.");
         }
         // Prevent bidding on own ad
         if (ad.userId === currentUserId) {
@@ -105,7 +105,7 @@ export async function placeBid(prevState: BidState, formData: FormData) {
         if (bidAmount < minimumRequiredBid) {
             throw new Error(`L'enchère doit être d'au moins ${minimumRequiredBid} € (palier de ${requiredIncrement} €).`);
         }
-        
+
         await prisma.bid.create({
             data: {
                 amount: bidAmount,
@@ -117,27 +117,27 @@ export async function placeBid(prevState: BidState, formData: FormData) {
         // Time extension logic
         const now = new Date();
         const ONE_HOUR_MS = 60 * 60 * 1000;
-        const TWO_HOURS_MS = 2 * 60 * 60 * 1000; 
-        
-        let newEndDate = ad.endDate; 
+        const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+
+        let newEndDate = ad.endDate;
         let isExtended = false;
-        
+
         if (ad.endDate.getTime() - now.getTime() < ONE_HOUR_MS) {
-            newEndDate = new Date(now.getTime() + TWO_HOURS_MS); 
+            newEndDate = new Date(now.getTime() + TWO_HOURS_MS);
             isExtended = true;
         }
-        
+
         // Update Ad Price & End Date
         await prisma.ad.update({
             where: { id: adId },
-            data: { 
+            data: {
                 price: bidAmount,
                 endDate: newEndDate
             }
         });
 
         const adLink = `/ad/${adId}`;
-        
+
         // Notifications
         if (previousBestBidderId && previousBestBidderId !== currentUserId) {
             await createNotification(previousBestBidderId, `⚠️ Surenchère sur "${ad.title}". Nouveau prix: ${bidAmount} €.`, adLink);
@@ -172,18 +172,18 @@ export async function buyNow(adId: number) {
     try {
         await prisma.$transaction(async (tx) => {
             const ad = await tx.ad.findUnique({ where: { id: adId } });
-            
+
             if (!ad) throw new Error("Introuvable.");
             if (ad.type !== 'SALE') throw new Error("Pas en vente directe.");
             if (ad.status !== 'ACTIVE' && ad.status !== 'PENDING') throw new Error("Non disponible (déjà vendu ou inactif).");
-            
+
             // Self-purchase check (Merged from origin/main logic)
             if (ad.userId === userId) throw new Error("Vous ne pouvez pas acheter votre propre annonce.");
-            
+
             // Verify user exists to prevent FK error
             const userExists = await tx.user.findUnique({ where: { id: userId } });
             if (!userExists) throw new Error("Utilisateur introuvable. Veuillez vous reconnecter.");
-            
+
             // Reservation check
             if (ad.reservedUntil && ad.reservedUntil > now && ad.reservedById !== userId) {
                 throw new Error("Cet article est réservé par un autre utilisateur.");
@@ -214,51 +214,51 @@ export async function buyNow(adId: number) {
 export async function confirmPurchase(adId: number, prevState: any, formData: FormData) {
     const session = await auth();
     if (!session?.user) return { success: false, message: "Non connecté" };
-    
+
     const userId = Number(session.user.id);
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    
+
     if (!user?.stripeCustomerId) return { success: false, message: "Aucun moyen de paiement." };
-    
+
     // Check Stripe PM
     const paymentMethods = await stripe.paymentMethods.list({ customer: user.stripeCustomerId, type: 'card' });
     if (paymentMethods.data.length === 0) return { success: false, message: "Ajoutez une carte bancaire." };
 
     try {
         await prisma.$transaction(async (tx) => {
-             const ad = await tx.ad.findUnique({ where: { id: adId } });
-             if (!ad) throw new Error("Annonce introuvable");
-             
-             // Check if reserved by user
-             if (ad.reservedById !== userId && (!ad.reservedUntil || ad.reservedUntil < new Date())) {
-                 if (ad.status === 'SOLD') throw new Error("Déjà vendu.");
-                 if (ad.reservedUntil && ad.reservedUntil > new Date() && ad.reservedById !== userId) throw new Error("Réservé par un autre.");
-             }
+            const ad = await tx.ad.findUnique({ where: { id: adId } });
+            if (!ad) throw new Error("Annonce introuvable");
 
-             // Charge Stripe
-             const paymentIntent = await stripe.paymentIntents.create({
-                 amount: Math.round((ad.price || 0) * 100),
-                 currency: 'eur',
-                 customer: user.stripeCustomerId!,
-                 payment_method: paymentMethods.data[0].id,
-                 off_session: true,
-                 confirm: true,
-             });
+            // Check if reserved by user
+            if (ad.reservedById !== userId && (!ad.reservedUntil || ad.reservedUntil < new Date())) {
+                if (ad.status === 'SOLD') throw new Error("Déjà vendu.");
+                if (ad.reservedUntil && ad.reservedUntil > new Date() && ad.reservedById !== userId) throw new Error("Réservé par un autre.");
+            }
 
-             await tx.ad.update({
-                 where: { id: adId },
-                 data: {
-                      status: 'SOLD',
-                      buyerId: userId,
-                      reservedUntil: null,
-                      reservedById: null
-                 }
-             });
+            // Charge Stripe
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: Math.round((ad.price || 0) * 100),
+                currency: 'eur',
+                customer: user.stripeCustomerId!,
+                payment_method: paymentMethods.data[0].id,
+                off_session: true,
+                confirm: true,
+            });
+
+            await tx.ad.update({
+                where: { id: adId },
+                data: {
+                    status: 'SOLD',
+                    buyerId: userId,
+                    reservedUntil: null,
+                    reservedById: null
+                }
+            });
         });
-        
+
         revalidatePath('/dashboard/purchases');
         return { success: true, message: "Paiement validé !" };
-        
+
     } catch (e: unknown) {
         const errorMessage = e instanceof Error ? e.message : "Erreur inconnue";
         return { success: false, message: "Echec paiement: " + errorMessage };
@@ -269,8 +269,8 @@ export async function confirmPurchase(adId: number, prevState: any, formData: Fo
 
 // notif de cloture des enchères expirées
 export async function closeExpiredAuctions() {
-    console.log("Démarrage de la tâche de clôture des enchères expirées...");
-    
+
+
     const now = new Date();
     // 1. Trouver toutes les annonces actives de type AUCTION dont la date de fin est passée
     const expiredAds = await prisma.ad.findMany({
@@ -278,7 +278,7 @@ export async function closeExpiredAuctions() {
             type: 'AUCTION',
             status: { in: ['ACTIVE', 'PENDING'] },
             endDate: {
-                lte: now, 
+                lte: now,
             },
         },
         include: {
@@ -294,7 +294,7 @@ export async function closeExpiredAuctions() {
         return { success: true, message: "Aucune enchère à clôturer." };
     }
 
-    console.log(`Clôture de ${expiredAds.length} enchère(s)...`);
+
 
     for (const ad of expiredAds) {
         const winningBid = ad.bids[0];
@@ -309,23 +309,23 @@ export async function closeExpiredAuctions() {
             try {
                 const winner = await prisma.user.findUnique({ where: { id: winnerId } });
                 if (winner && winner.stripeCustomerId) {
-                     const paymentMethods = await stripe.paymentMethods.list({ customer: winner.stripeCustomerId, type: 'card' });
-                     if (paymentMethods.data.length > 0) {
-                          await stripe.paymentIntents.create({
-                                amount: Math.round(winningBid.amount * 100),
-                                currency: 'eur',
-                                customer: winner.stripeCustomerId,
-                                payment_method: paymentMethods.data[0].id,
-                                off_session: true,
-                                confirm: true,
-                                metadata: {
-                                    adId: ad.id.toString(),
-                                    userId: winnerId.toString(),
-                                    type: 'AUCTION_WIN'
-                                }
-                          });
-                          paymentStatus = 'PAID';
-                     }
+                    const paymentMethods = await stripe.paymentMethods.list({ customer: winner.stripeCustomerId, type: 'card' });
+                    if (paymentMethods.data.length > 0) {
+                        await stripe.paymentIntents.create({
+                            amount: Math.round(winningBid.amount * 100),
+                            currency: 'eur',
+                            customer: winner.stripeCustomerId,
+                            payment_method: paymentMethods.data[0].id,
+                            off_session: true,
+                            confirm: true,
+                            metadata: {
+                                adId: ad.id.toString(),
+                                userId: winnerId.toString(),
+                                type: 'AUCTION_WIN'
+                            }
+                        });
+                        paymentStatus = 'PAID';
+                    }
                 }
             } catch (e: unknown) {
                 console.error(`Erreur paiement enchère ${ad.id}:`, e);
@@ -335,21 +335,21 @@ export async function closeExpiredAuctions() {
                 where: { id: ad.id },
                 data: {
                     status: 'SOLD',
-                    buyerId: winnerId, 
+                    buyerId: winnerId,
                 },
             });
 
             // NOTIFICATIONS
-            const winnerMessage = paymentStatus === 'PAID' 
+            const winnerMessage = paymentStatus === 'PAID'
                 ? `🥳 Vous avez remporté "${ad.title}" ! Votre carte a été débitée de ${winningBid.amount} €.`
                 : `🥳 Vous avez remporté "${ad.title}" ! Le paiement automatique a échoué, merci de régulariser.`;
-                
+
             await createNotification(winnerId, winnerMessage, adLink);
 
             const sellerMessage = paymentStatus === 'PAID'
                 ? `✅ Votre annonce "${ad.title}" est vendue et payée (${winningBid.amount} €).`
                 : `✅ Votre annonce "${ad.title}" est vendue (${winningBid.amount} €) (Paiement en attente/échec).`;
-                
+
             await createNotification(ad.userId, sellerMessage, adLink);
 
             revalidatePath(adLink);
@@ -363,7 +363,7 @@ export async function closeExpiredAuctions() {
 
             const sellerMessage = `❌ Votre annonce "${ad.title}" est expirée sans aucune offre.`;
             await createNotification(ad.userId, sellerMessage, adLink);
-            
+
             revalidatePath(adLink);
         }
     }

@@ -23,7 +23,7 @@ export function AccountingExportButton({ transactions }: AccountingExportButtonP
             Annonce: t.ad.title,
             Type: t.type,
             Montant: t.amount,
-            Commission: t.commissionAmount,
+            Commission: t.commissionAmount / 100,
             Date: new Date(t.createdAt).toLocaleDateString(),
             Vendeur: t.ad.user.name || t.ad.user.email
         }));

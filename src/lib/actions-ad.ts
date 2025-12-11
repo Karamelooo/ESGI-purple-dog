@@ -41,8 +41,7 @@ export async function createAd(prevState: unknown, formData: FormData) {
         .map((url) => url.trim())
         .filter((url) => url.length > 0);
 
-    // AI Content Check (Mock or Real)
-    // const isSafe = await checkContentSafety(title, description);
+
 
     // Calculate End Date for Auction (mock: 7 days default if not provided)
     let finalEndDate = null;

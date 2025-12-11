@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { PayButton } from "@/components/pay-button";
 import { Countdown } from "@/components/countdown";
+import { Button } from "@/components/ui/button";
+import { ConfirmReceiptButton } from "@/components/confirm-receipt-button";
 
 export default async function PurchasesPage() {
   const session = await auth();
@@ -17,6 +19,7 @@ export default async function PurchasesPage() {
     where: { buyerId: userId, status: "SOLD" },
     include: {
       bids: { where: { userId: userId }, orderBy: { amount: "desc" }, take: 1 },
+      delivery: true,
     },
   });
 
@@ -87,7 +90,11 @@ export default async function PurchasesPage() {
                   <div className="flex justify-between items-center mb-4">
                     <span className="font-bold text-lg">{ad.price} €</span>
                   </div>
-                  <PayButton adId={ad.id} price={ad.price ?? 0} />
+                  <Link href={`/checkout/${ad.id}`}>
+                    <Button className="w-full bg-green-600 hover:bg-green-700 font-bold">
+                      Finaliser l&apos;achat ({ad.price} €)
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             ))}
@@ -119,6 +126,34 @@ export default async function PurchasesPage() {
                     </div>
                     <p className="font-bold text-green-600">Acheté</p>
                     <p>Prix: {ad.price || ad.bids[0]?.amount + " €"}</p>
+
+                    {ad.delivery && (
+                      <div className="mt-3 pt-3 border-t text-sm">
+                        <p className="flex justify-between">
+                          <span>Transporteur:</span>
+                          <span className="font-semibold">{ad.delivery.carrier}</span>
+                        </p>
+                        <p className="flex justify-between mt-1">
+                          <span>Statut:</span>
+                          <span className={`font-bold ${ad.delivery.status === 'DELIVERED' ? 'text-green-600' : 'text-orange-600'}`}>
+                            {ad.delivery.status}
+                          </span>
+                        </p>
+                        {ad.delivery.trackingNumber ? (
+                          <p className="mt-2 bg-gray-100 p-2 rounded text-center font-mono">
+                            {ad.delivery.trackingNumber}
+                          </p>
+                        ) : (
+                          <p className="text-gray-500 italic mt-1 text-xs">N° de suivi non encore renseigné</p>
+                        )}
+                      </div>
+                    )}
+
+
+
+                    {ad.delivery && ad.delivery.status !== 'DELIVERED' && (
+                      <ConfirmReceiptButton adId={ad.id} />
+                    )}
                   </CardContent>
                 </Card>
               </Link>
@@ -165,6 +200,6 @@ export default async function PurchasesPage() {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+    </div >
   );
 }

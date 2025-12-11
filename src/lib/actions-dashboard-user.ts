@@ -1,9 +1,9 @@
 'use server';
 
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma"; 
+import prisma from "@/lib/prisma";
 // Nous gardons l'import de base, mais nous n'utilisons plus les types de modèles individuels
-import { Prisma } from '@prisma/client'; 
+import { Prisma } from '@prisma/client';
 
 // ----------------------------------------------------
 // DÉFINITION DES TYPES MANUELS (POUR ÉVITER LES ERREURS DE TYPAGE PRISMA)
@@ -50,7 +50,7 @@ interface MessageQueryResult {
     id: number;
     content: string;
     createdAt: Date;
-    user: UserDetails; 
+    user: UserDetails;
 }
 
 
@@ -70,13 +70,28 @@ interface AdMessage {
     id: number;
     content: string;
     createdAt: Date;
-    user: UserDetails; 
+    user: UserDetails;
 }
 
 interface AdOffersResult {
     title: string;
+    status?: string;
     offers: AdOffer[];
     messages: AdMessage[];
+    soldDetails?: any; // To avoid circular ref with local interface, or define SoldDetails outside. Defining outside is better.
+}
+
+interface SoldDetails {
+    buyerName: string | null;
+    delivery: {
+        status: string;
+        carrier: string | null;
+        trackingNumber: string | null;
+        address: string | null;
+        city: string | null;
+        zipCode: string | null;
+        phone: string | null;
+    } | null;
 }
 
 
@@ -99,17 +114,17 @@ export async function fetchUserAds() {
             select: {
                 id: true,
                 title: true,
-                type: true, 
-                price: true, 
-                status: true, 
+                type: true,
+                price: true,
+                status: true,
                 createdAt: true,
-                endDate: true, 
+                endDate: true,
                 images: true,
             },
             orderBy: { createdAt: 'desc' },
         }) as AdQueryResult[]; // Cast for type safety
 
-        const data = ads.map((ad) => ({ 
+        const data = ads.map((ad) => ({
             ...ad,
             displayStatus: ad.type === 'AUCTION' && ad.status === 'ACTIVE' && ad.endDate && new Date(ad.endDate) < new Date()
                 ? 'Terminé (Non Clôturé)'
@@ -142,15 +157,15 @@ export async function fetchUserPurchases() {
 
     try {
         const purchases = await prisma.ad.findMany({
-            where: { 
+            where: {
                 buyerId: userIdFilter,
-                status: 'SOLD', 
+                status: 'SOLD',
             },
             select: {
                 id: true,
                 title: true,
                 type: true,
-                price: true, 
+                price: true,
                 createdAt: true,
                 bids: {
                     orderBy: { amount: 'desc' },
@@ -164,11 +179,11 @@ export async function fetchUserPurchases() {
             orderBy: { createdAt: 'desc' },
         }) as PurchaseQueryResult[]; // Cast for type safety
 
-        const data = purchases.map((p) => { 
+        const data = purchases.map((p) => {
             const finalPrice = p.type === 'AUCTION' && p.bids.length > 0
                 ? p.bids[0].amount
                 : p.price ?? 0;
-            
+
             return {
                 adId: p.id,
                 title: p.title,
@@ -192,6 +207,9 @@ export async function fetchUserPurchases() {
 // 3. fetchAdOffers (Récupérer les offres et messages pour une annonce)
 // ----------------------------------------------------
 
+// 3. fetchAdOffers (Récupérer les offres et messages pour une annonce)
+// ----------------------------------------------------
+
 export async function fetchAdOffers(adId: number): Promise<{ data: AdOffersResult | null; error: string | null }> {
     const session = await auth();
 
@@ -200,22 +218,57 @@ export async function fetchAdOffers(adId: number): Promise<{ data: AdOffersResul
     }
 
     const currentUserId = Number(session.user.id);
-    
+
     if (isNaN(adId) || adId <= 0) {
         return { error: "ID d'annonce invalide.", data: null };
     }
 
+    // Interface updates (inline or at top) for Buyer/Delivery
+    // Moved SoldDetails to top scope for cleaner code
+
+
     try {
+        interface AdWithDetails {
+            userId: number;
+            title: string;
+            status: string;
+            buyer?: { name: string | null } | null;
+            delivery?: {
+                status: string;
+                carrier: string | null;
+                trackingNumber: string | null;
+                address: string | null;
+                city: string | null;
+                zipCode: string | null;
+                phone: string | null;
+            } | null;
+        }
+
         const ad = await prisma.ad.findUnique({
             where: { id: adId },
-            select: { userId: true, title: true }
-        });
-
+            select: {
+                userId: true,
+                title: true,
+                status: true,
+                buyer: { select: { name: true } },
+                delivery: {
+                    select: {
+                        status: true,
+                        carrier: true,
+                        trackingNumber: true,
+                        address: true,
+                        city: true,
+                        zipCode: true,
+                        phone: true
+                    }
+                }
+            }
+        }) as unknown as AdWithDetails;
         if (!ad || ad.userId !== currentUserId) {
             return { error: "Annonce introuvable ou vous n'êtes pas le propriétaire.", data: null };
         }
 
-        // 1. Récupération des offres
+        // ... (existing offers fetch) ...
         const offers = await prisma.bid.findMany({
             where: { adId: adId },
             select: {
@@ -227,27 +280,25 @@ export async function fetchAdOffers(adId: number): Promise<{ data: AdOffersResul
                 },
                 isAutoBid: true,
             },
-            orderBy: { amount: 'desc' }, 
-        }) as BidQueryResult[]; // Cast for type safety
+            orderBy: { amount: 'desc' },
+        }) as BidQueryResult[];
 
-        // 2. Récupération des messages
-        // Cast 'any' sur prisma.message OBLIGATOIRE si la propriété n'est pas reconnue
-        const messagesQuery = (await (prisma as any).message.findMany({ 
+        // ... (existing messages fetch) ...
+        const messagesQuery = (await (prisma as any).message.findMany({
             where: { adId: adId },
             select: {
                 id: true,
                 content: true,
                 createdAt: true,
-                user: { 
-                    select: { id: true, name: true, role: true } 
+                user: {
+                    select: { id: true, name: true, role: true }
                 }
             },
-            orderBy: { createdAt: 'asc' }, 
-        })) as MessageQueryResult[]; // Cast for type safety
-        
-        // --- Mappage des données ---
-        
-        const offersData: AdOffer[] = offers.map((offer) => ({ 
+            orderBy: { createdAt: 'asc' },
+        })) as MessageQueryResult[];
+
+        // ... (mapping) ...
+        const offersData: AdOffer[] = offers.map((offer) => ({
             id: offer.id,
             amount: offer.amount,
             createdAt: offer.createdAt,
@@ -258,24 +309,43 @@ export async function fetchAdOffers(adId: number): Promise<{ data: AdOffersResul
             }
         }));
 
-        const messagesData: AdMessage[] = messagesQuery.map((msg) => ({ 
+        const messagesData: AdMessage[] = messagesQuery.map((msg) => ({
             id: msg.id,
             content: msg.content,
             createdAt: msg.createdAt,
             user: {
                 id: msg.user.id,
                 name: msg.user.name,
-                role: msg.user.role 
+                role: msg.user.role
             }
         }));
 
-        return { 
-            data: { 
-                title: ad.title, 
-                offers: offersData, 
-                messages: messagesData 
-            }, 
-            error: null 
+        // Sold Details construction
+        let soldDetails: SoldDetails | null = null;
+        if (ad.status === 'SOLD' && ad.buyer) {
+            soldDetails = {
+                buyerName: ad.buyer.name,
+                delivery: ad.delivery ? {
+                    status: ad.delivery.status,
+                    carrier: ad.delivery.carrier,
+                    trackingNumber: ad.delivery.trackingNumber,
+                    address: ad.delivery.address,
+                    city: ad.delivery.city,
+                    zipCode: ad.delivery.zipCode,
+                    phone: ad.delivery.phone
+                } : null
+            };
+        }
+
+        return {
+            data: {
+                title: ad.title,
+                status: ad.status,
+                offers: offersData,
+                messages: messagesData,
+                soldDetails: soldDetails
+            },
+            error: null
         };
 
     } catch (e) {
@@ -295,14 +365,14 @@ export async function fetchUserNotifications(limit: number = 10) {
     if (!session?.user || !session.user.id) {
         return { error: "Non authentifié" };
     }
-    
+
     const userId = Number(session.user.id);
 
     try {
         const notifications = await prisma.notification.findMany({
             where: { userId: userId },
-            orderBy: { createdAt: 'desc' }, 
-            take: limit, 
+            orderBy: { createdAt: 'desc' },
+            take: limit,
         });
 
         const unreadCount = await prisma.notification.count({
@@ -351,5 +421,46 @@ export async function markNotificationsAsRead(notificationIds: number[] | null =
     } catch (e) {
         console.error("Erreur lors du marquage des notifications comme lues:", e);
         return { success: false, error: "Erreur serveur lors de la mise à jour." };
+    }
+}
+
+
+// ----------------------------------------------------
+// 6. updateDeliveryStatus (Seller updates delivery)
+// ----------------------------------------------------
+
+export async function updateDeliveryStatus(adId: number, trackingNumber: string) {
+    const session = await auth();
+    if (!session?.user || !session.user.id) {
+        return { success: false, error: "Non authentifié" };
+    }
+    const userId = Number(session.user.id);
+
+    try {
+        const ad = await prisma.ad.findUnique({
+            where: { id: adId },
+            include: { delivery: true }
+        });
+
+        if (!ad || ad.userId !== userId) {
+            return { success: false, error: "Non autorisé" };
+        }
+
+        if (!ad.delivery) {
+            return { success: false, error: "Aucune livraison associée." };
+        }
+
+        await prisma.delivery.update({
+            where: { adId: adId },
+            data: {
+                status: 'SENT',
+                trackingNumber: trackingNumber
+            }
+        });
+
+        return { success: true };
+    } catch (e) {
+        console.error("Error updating delivery:", e);
+        return { success: false, error: "Erreur serveur." };
     }
 }

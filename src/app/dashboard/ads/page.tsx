@@ -92,15 +92,23 @@ export default async function MyAdsPage() {
                   Modifier
                 </Button>
               </Link>
-              <Link href={`/ad/${ad.id}`}>
-                <Button variant="ghost" size="sm">
-                  Voir
-                </Button>
-              </Link>
+              {ad.status === 'SOLD' ? (
+                <Link href={`/dashboard/ads/management/${ad.id}`}>
+                  <Button variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                    Gérer Vente
+                  </Button>
+                </Link>
+              ) : (
+                <Link href={`/ad/${ad.id}`}>
+                  <Button variant="ghost" size="sm">
+                    Voir
+                  </Button>
+                </Link>
+              )}
             </CardFooter>
           </Card>
         ))}
       </div>
-    </div>
+    </div >
   );
 }

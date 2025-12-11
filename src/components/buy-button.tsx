@@ -39,9 +39,7 @@ export function BuyButton({
     reservedUntil &&
     new Date(reservedUntil) > new Date() &&
     reservedById !== currentUserId;
-  // If reserved by ME, show "Already in cart/Pay now" logic? For now, we keep it simple or just regular button but it might re-trigger "Already reserved" error which is handled.
-  // Actually, if reserved by ME, maybe disable "Buy Now" (Add to cart) to avoid confusion?
-  // The prompt asked for "button grisé en disant qu'il n'est pas disponible" for OTHER users.
+
 
   if (isReservedByOther) {
     return (

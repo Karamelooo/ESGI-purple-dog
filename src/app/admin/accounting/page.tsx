@@ -14,7 +14,7 @@ export default async function AdminAccountingPage() {
   });
 
   const totalCommission = transactions.reduce(
-    (acc, t) => acc + t.commissionAmount,
+    (acc, t) => acc + (t.commissionAmount / 100),
     0
   );
 
@@ -72,7 +72,7 @@ export default async function AdminAccountingPage() {
                   {t.amount} €
                 </td>
                 <td className="px-6 py-4 text-right font-bold text-green-600">
-                  +{t.commissionAmount} €
+                  +{t.commissionAmount / 100} €
                 </td>
                 <td className="px-6 py-4 text-right text-gray-400">
                   {new Date(t.createdAt).toLocaleDateString()}
