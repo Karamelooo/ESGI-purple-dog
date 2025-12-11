@@ -109,13 +109,16 @@ async function main() {
         }
     })
 
-    // Buyer User
+    // Buyer User (PRO)
     const buyerUser = await prisma.user.create({
         data: {
             email: 'buyer@purpledog.com',
             name: 'Alice Buyer',
             password,
-            role: Role.USER,
+            role: Role.PRO,
+            companyName: 'Alice Art Gallery',
+            siret: '98765432100019',
+            specialties: 'Achat d\'art, Collectionneur',
         }
     })
 
