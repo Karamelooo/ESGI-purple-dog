@@ -5,6 +5,7 @@ const prisma = new PrismaClient()
 
 async function main() {
     // Safe cleanup
+    await prisma.transaction.deleteMany()
     await prisma.bid.deleteMany()
     await prisma.notification.deleteMany()
     await prisma.ad.deleteMany()
@@ -108,7 +109,76 @@ async function main() {
         }
     })
 
-    console.log({ admin, proUser, individualUser, auctionAd, saleAd })
+    // Buyer User (PRO)
+    const buyerUser = await prisma.user.create({
+        data: {
+            email: 'buyer@purpledog.com',
+            name: 'Alice Buyer',
+            password,
+            role: Role.PRO,
+            companyName: 'Alice Art Gallery',
+            siret: '98765432100019',
+            specialties: 'Achat d\'art, Collectionneur',
+        }
+    })
+
+    // 4. Create Transactions (Accounting Data)
+
+    // Create a sold ad with a transaction
+    const soldAd1 = await prisma.ad.create({
+        data: {
+            title: 'Vase Gallé Art Nouveau',
+            description: 'Vase en pâte de verre multicouche...',
+            type: AdType.SALE,
+            status: 'SOLD',
+            price: 450,
+            dimensions: '30cm',
+            weight: 1.2,
+            userId: proUser.id,
+            buyerId: buyerUser.id,
+            categoryId: allCats.find(c => c.slug === 'art-tableaux')?.id || allCats[0].id, // Approximate category
+        }
+    })
+
+    const transaction1 = await prisma.transaction.create({
+        data: {
+            amount: 450,
+            commissionAmount: 45, // 10%
+            type: 'PAIEMENT',
+            status: 'COMPLETED',
+            stripePaymentId: 'ch_1234567890',
+            adId: soldAd1.id,
+            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) // 2 days ago
+        }
+    })
+
+    // Another sold ad
+    const soldAd2 = await prisma.ad.create({
+        data: {
+            title: 'Lampe Jielde',
+            description: 'Lampe industrielle vintage 2 bras',
+            type: AdType.AUCTION,
+            status: 'SOLD',
+            price: 320, // Final price
+            userId: individualUser.id,
+            buyerId: admin.id, // Admin bought it mostly for testing
+            categoryId: allCats.find(c => c.slug === 'meubles-anciens')?.id || allCats[0].id,
+        }
+    })
+
+    const transaction2 = await prisma.transaction.create({
+        data: {
+            amount: 320,
+            commissionAmount: 32, // 10%
+            type: 'PAIEMENT',
+            status: 'COMPLETED',
+            stripePaymentId: 'ch_0987654321',
+            adId: soldAd2.id,
+            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) // 5 days ago
+        }
+    })
+
+    console.log({ admin, proUser, individualUser, auctionAd, saleAd, soldAd1, soldAd2, transaction1, transaction2 })
 }
 
 main()

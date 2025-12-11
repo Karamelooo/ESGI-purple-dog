@@ -44,6 +44,15 @@ export async function createAd(prevState: any, formData: FormData) {
         finalEndDate = d;
     }
 
+    // Extract custom attributes
+    const customAttributes: Record<string, any> = {};
+    for (const [key, value] of formData.entries()) {
+        if (key.startsWith('custom_')) {
+            const label = key.replace('custom_', '');
+            customAttributes[label] = value;
+        }
+    }
+
     try {
         await prisma.ad.create({
             data: {
@@ -59,6 +68,7 @@ export async function createAd(prevState: any, formData: FormData) {
                 reservePrice: minPrice,
                 endDate: finalEndDate,
                 startDate: new Date(),
+                customAttributes,
             }
         });
     } catch (e) {

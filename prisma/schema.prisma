@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  binaryTargets = ["native", "darwin-arm64", "linux-musl-openssl-3.0.x", "linux-musl-arm64-openssl-3.0.x"]
+  binaryTargets = ["native", "darwin-arm64", "linux-musl-openssl-3.0.x", "linux-musl-arm64-opensssl-3.0.x"]
 }
 
 datasource db {
@@ -35,27 +35,35 @@ model User {
   password      String
   role          Role           @default(USER)
   createdAt     DateTime       @default(now())
-  
+  isBlocked     Boolean        @default(false)
+
   // Profile fields
   photoUrl      String?
-  
+
   // Pro fields
   companyName   String?
   siret         String?
-  specialties   String?        // JSON or comma-separated
-  
+  specialties   String?
+
   // Relations
   ads           Ad[]
   bids          Bid[]
   notifications Notification[]
-  messages Message[]
+  messages      Message[]
   purchases     Ad[]           @relation("BuyerAds")
+  reviewsWritten  Review[]     @relation("ReviewsWritten")
+  reviewsReceived Review[]     @relation("ReviewsReceived")
 }
 
 model Category {
   id    Int    @id @default(autoincrement())
   name  String @unique
   slug  String @unique
+
+  commissionRateBuyer  Float?
+  commissionRateSeller Float?
+  formConfig           Json?
+
   ads   Ad[]
 }
 
@@ -63,42 +71,47 @@ model Ad {
   id          Int      @id @default(autoincrement())
   title       String
   description String
-  
-  // Product Details
-  dimensions  String?  // stored as "LxWxH" or JSON
-  weight      Float?   // in kg
-  
+
+  // Details
+  dimensions  String?
+  weight      Float?
+
   // Images & Docs
-  images      String[] // Array of image URLs
-  documents   String[] // Array of document URLs
-  
+  images      String[]
+  documents   String[]
+
   // Location
   location    String?
-  
+
   // Status & Type
   status      AdStatus @default(PENDING)
   type        AdType
-  
-  // Pricing & Auction
-  price       Float?    // Buy now price for SALE, or Start price for AUCTION
-  reservePrice Float?   // Min price for auction
-  buyNowPrice Float?    // Optional buy now price for auction?
-  
+
+  // Pricing / Auction
+  price        Float?
+  reservePrice Float?
+  buyNowPrice  Float?
+
   startDate   DateTime  @default(now())
-  endDate     DateTime? // Required for auctions
-  
+  endDate     DateTime?
+
   // Relations
   categoryId  Int
-  category    Category  @relation(fields: [categoryId], references: [id])
-  
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  customAttributes Json?
+
   userId      Int
   user        User      @relation(fields: [userId], references: [id])
-  
+
   buyerId     Int?
   buyer       User?     @relation("BuyerAds", fields: [buyerId], references: [id])
-  
+
   bids        Bid[]
-  messages     Message[]
+  messages    Message[]
+  transactions Transaction[]
+  delivery     Delivery?
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -106,16 +119,16 @@ model Ad {
 model Bid {
   id        Int      @id @default(autoincrement())
   amount    Float
-  
+
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  
+  user      User @relation(fields: [userId], references: [id])
+
   adId      Int
-  ad        Ad       @relation(fields: [adId], references: [id])
-  
+  ad        Ad   @relation(fields: [adId], references: [id])
+
   isAutoBid Boolean  @default(false)
-  maxLimit  Float?   // For auto-bidding
-  
+  maxLimit  Float?
+
   createdAt DateTime @default(now())
 }
 
@@ -124,28 +137,82 @@ model Notification {
   message   String
   read      Boolean  @default(false)
   link      String?
-  
+
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  
+  user      User @relation(fields: [userId], references: [id])
+
   createdAt DateTime @default(now())
 }
-
-// Dans schema.prisma
 
 model Message {
   id        Int      @id @default(autoincrement())
   content   String   @db.Text
   createdAt DateTime @default(now())
 
-  // Relations
   adId      Int
-  ad        Ad       @relation(fields: [adId], references: [id])
+  ad        Ad @relation(fields: [adId], references: [id])
 
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  user      User @relation(fields: [userId], references: [id])
 
-  // Ajout d'un index pour optimiser les requêtes
   @@index([adId])
 }
 
+model GlobalSettings {
+  id                    Int      @id @default(autoincrement())
+  commissionRateBuyer   Float    @default(0.0)
+  commissionRateSeller  Float    @default(0.0)
+  updatedAt             DateTime @updatedAt
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String?
+
+  authorId  Int
+  author    User @relation("ReviewsWritten", fields: [authorId], references: [id])
+
+  targetId  Int
+  target    User @relation("ReviewsReceived", fields: [targetId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Transaction {
+  id               Int      @id @default(autoincrement())
+  amount           Float
+  commissionAmount Float
+  type             String
+  status           String
+  stripePaymentId  String?
+
+  adId             Int
+  ad               Ad @relation(fields: [adId], references: [id])
+
+  createdAt        DateTime @default(now())
+}
+
+model Delivery {
+  id             Int      @id @default(autoincrement())
+  status         String
+  trackingNumber String?
+  carrier        String?
+
+  adId           Int      @unique
+  ad             Ad       @relation(fields: [adId], references: [id])
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model DeliveryPlatform {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  isActive  Boolean  @default(false)
+  config    Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
