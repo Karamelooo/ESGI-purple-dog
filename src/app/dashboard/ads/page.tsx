@@ -41,7 +41,7 @@ export default async function MyAdsPage() {
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-purple-900">Mes annonces</h1>
-        <Link href="/create-ad">
+        <Link href="/deposer-une-annonce">
           <Button>Créer une annonce</Button>
         </Link>
       </div>
@@ -86,24 +86,45 @@ export default async function MyAdsPage() {
                 Publié le: {new Date(ad.createdAt).toLocaleDateString()}
               </div>
             </CardContent>
+            {/* Logic:
+                  - SOLD: Gérer Vente + Voir
+                  - AUCTION (Active): Voir (Only)
+                  - SALE (Active): Modifier + Voir
+              */}
+
             <CardFooter className="flex justify-end gap-2">
-              <Link href={`/ad/${ad.id}/edit`}>
-                <Button variant="outline" size="sm">
-                  Modifier
-                </Button>
-              </Link>
               {ad.status === 'SOLD' ? (
-                <Link href={`/dashboard/ads/management/${ad.id}`}>
-                  <Button variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                    Gérer Vente
-                  </Button>
-                </Link>
-              ) : (
+                <>
+                  <Link href={`/ad/${ad.id}`}>
+                    <Button variant="ghost" size="sm">
+                      Voir
+                    </Button>
+                  </Link>
+                  <Link href={`/dashboard/ads/management/${ad.id}`}>
+                    <Button variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                      Gérer Vente
+                    </Button>
+                  </Link>
+                </>
+              ) : ad.type === 'AUCTION' ? (
                 <Link href={`/ad/${ad.id}`}>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="outline" size="sm">
                     Voir
                   </Button>
                 </Link>
+              ) : (
+                <>
+                  <Link href={`/ad/${ad.id}`}>
+                    <Button variant="ghost" size="sm">
+                      Voir
+                    </Button>
+                  </Link>
+                  <Link href={`/ad/${ad.id}/edit`}>
+                    <Button variant="outline" size="sm">
+                      Modifier
+                    </Button>
+                  </Link>
+                </>
               )}
             </CardFooter>
           </Card>
