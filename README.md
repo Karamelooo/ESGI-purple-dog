@@ -70,6 +70,10 @@ Le fichier `.env` est géré automatiquement, mais voici les variables clés :
 ```env
 DATABASE_URL="postgresql://user:password@postgres:5432/leboncoindb"
 AUTH_SECRET="votre_secret_genere"
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_secret_key"
+STRIPE_SECRET_KEY="sk_test_secret_key"
+STRIPE_WEBHOOK_SECRET="whsec_secret_key"
+DOMAIN_NAME="example.com" # Votre domaine pour la production
 ```
 
 ### 3. Lancer avec Docker 🐳
