@@ -8,11 +8,14 @@ Purple Dog est une application web moderne connectant des particuliers souhaitan
 
 ## 🚀 Fonctionnalités Principales
 
-### 🔐 Authentification & Rôles
+### 🔐 Authentification, Rôles & Abonnements
 
 - **Particuliers** : Peuvent créer un compte, déposer des annonces et suivre leurs ventes.
-- **Professionnels** : Accès exclusif aux enchères et à l'achat immédiat. Tableau de bord dédié (statistiques, achats).
-- **Admin** : Gestion globale (via `/admin`).
+- **Professionnels** :
+    - Accès aux enchères et à l'achat immédiat.
+    - **Abonnements** : Système de plans (Standard, Gold, Platinum) géré via **Stripe**.
+    - Tableau de bord dédié (statistiques, achats, facturation).
+- **Admin** : Gestion globale (utilisateurs, abonnements, commission) via `/admin`.
 
 ### 📦 Dépôt d'Annonces & IA
 
@@ -20,17 +23,23 @@ Purple Dog est une application web moderne connectant des particuliers souhaitan
 - **Estimation par IA** : Intégration avec **Ollama (Llama 3)** pour suggérer un prix basé sur le titre et la description de l'objet.
 - Choix du mode de vente : **Vente Directe** ou **Enchère**.
 
-### 🔨 Système d'Enchères
+### 🔨 Système d'Enchères & Paiements
 
-- **Réservé aux Pros** : Seuls les professionnels validés peuvent enchérir.
-- **Offres Sécurisées** : Le système vérifie que chaque offre est supérieure à l'offre actuelle (+10€ min).
-- **Temps Réel** : Mise à jour des prix et de l'historique des enchères.
-- **Achat Immédiat** : Possibilité d'acheter directement au prix fixé (si option activée).
+- **Enchères Sécurisées** : Seuls les professionnels avec un abonnement valide peuvent enchérir.
+- **Paiements Stripe** : Intégration complète pour les abonnements et les transactions d'achat (Marketplace avec Stripe Connect).
+- **Achat Immédiat** : Paiement sécurisé et retenue de commission automatique.
+
+### 🚚 Logistique & Suivi
+
+- **Expédition** : Gestion des adresses d'expédition lors de l'achat.
+- **Suivi de Colis** : Le vendeur renseigne le numéro de suivi, l'acheteur suit l'acheminement depuis son dashboard.
+- **Workflow** : Validation de l'expédition et réception du colis.
 
 ### 📊 Tableaux de Bord
 
-- **User Dashboard** : Suivi des annonces en ligne, vendues, ou en attente.
-- **Pro Dashboard** : Suivi des enchères en cours, des achats réalisés et du chiffre d'affaires.
+- **User Dashboard** : Suivi des annonces, ventes, et génération d'étiquettes d'envoi.
+- **Pro Dashboard** : Suivi des enchères, historique des achats, gestion de l'abonnement.
+- **Admin Dashboard** : Vue d'ensemble des revenus, gestion des litiges et configuration de la plateforme.
 
 ---
 
@@ -41,6 +50,7 @@ Purple Dog est une application web moderne connectant des particuliers souhaitan
 - **Base de Données** : PostgreSQL
 - **ORM** : Prisma
 - **Auth** : NextAuth.js v5 (Beta)
+- **Paiement** : Stripe (Connect & Billing)
 - **UI** : Tailwind CSS, Shadcn/ui, Lucide Icons
 - **IA** : Ollama (Llama 3 local)
 - **Infrastructure** : Docker & Docker Compose
@@ -63,54 +73,44 @@ cd ESGI-purple-dog
 
 ### 2. Configuration
 
-Le projet est pré-configuré pour Docker. Assurez-vous que les ports `3000` (Web), `5432` (Postgres) et `11434` (Ollama) sont libres.
-
-Le fichier `.env` est géré automatiquement, mais voici les variables clés :
+Le projet est pré-configuré pour Docker. Le fichier `.env` est géré automatiquement, mais voici les variables clés pour la production et Stripe :
 
 ```env
 DATABASE_URL="postgresql://user:password@postgres:5432/leboncoindb"
 AUTH_SECRET="votre_secret_genere"
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_secret_key"
-STRIPE_SECRET_KEY="sk_test_secret_key"
-STRIPE_WEBHOOK_SECRET="whsec_secret_key"
-DOMAIN_NAME="example.com" # Votre domaine pour la production
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+DOMAIN_NAME="example.com"
 ```
 
 ### 3. Lancer avec Docker 🐳
 
-L'environnement complet (App + DB + IA) se lance en une commande :
-
+#### Environnement de Développement (Complet avec IA)
 ```bash
 docker compose up -d
 ```
 
-_Note : Le premier lancement peut être long (téléchargement des images et du modèle IA)._
+#### Environnement de Production (Optimisé)
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
 
-### 3b. Mode Développement Léger (Sans IA) ⚡️
-
-Pour économiser des ressources (RAM), vous pouvez lancer une version sans le service Ollama (l'estimation de prix ne fonctionnera pas, mais l'app ne plantera pas) :
-
+#### Environnement Léger (Sans IA)
+Pour les petites configs, sans le service Ollama :
 ```bash
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-Les conteneurs auront le suffixe `-dev` (ex: `leboncoin-app-dev`). Pensez à initialiser la DB spécifique à cet environnement :
-
-```bash
-docker exec leboncoin-app-dev npx prisma migrate dev
-docker exec leboncoin-app-dev npx prisma db seed
-
-```
-
 ### 4. Initialiser la Base de Données
 
-Une fois les conteneurs lancés, initialisez la DB et les données de test :
+Une fois les conteneurs lancés :
 
 ```bash
 # Appliquer le schéma
 docker exec leboncoin-app npx prisma migrate dev
 
-# Lancer le seed (Données de démo)
+# Lancer le seed (Données de démo : Users, Abonnements, Transactions, etc.)
 docker exec leboncoin-app npx prisma db seed
 ```
 
@@ -130,46 +130,6 @@ Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur.
 
 ---
 
-## 🐛 Dépannage Courant
-
-### Erreur Prisma "Binary Target"
-
-Si vous rencontrez des erreurs liées à `openssl` ou aux `binaryTargets` (notamment sur Mac M1/M2/M3), assurez-vous que `prisma/schema.prisma` contient :
-
-```prisma
-binaryTargets = ["native", "darwin-arm64", "linux-musl-openssl-3.0.x", "linux-musl-arm64-openssl-3.0.x"]
-```
-
-Puis régénérez le client :
-
-```bash
-docker exec leboncoin-app npx prisma generate
-docker restart leboncoin-app
-```
-
-### Erreur "tw-animate-css" ou Module non trouvé
-
-Il s'agit souvent d'un problème de cache.
-
-```bash
-docker exec leboncoin-app rm -rf .next
-docker restart leboncoin-app
-```
-
-### 🐛 Problèmes spécifiques au Mode Dev
-
-Si vous rencontrez des erreurs de modules (`Can't resolve...`) ou Prisma en mode dev :
-
-```bash
-# Réinstaller les dépendances dans le conteneur dev
-docker exec leboncoin-app-dev npm install tailwindcss-animate class-variance-authority clsx tailwind-merge @radix-ui/react-slot
-docker exec leboncoin-app-dev apk add openssl
-docker exec leboncoin-app-dev npx prisma generate
-docker restart leboncoin-app-dev
-```
-
----
-
 ## 📂 Schéma de Base de Données
 
 ```mermaid
@@ -178,15 +138,30 @@ erDiagram
     User ||--o{ Ad : "buys"
     User ||--o{ Bid : "places"
     User ||--o{ Notification : "receives"
+    User ||--o{ Transaction : "initiates"
+    User ||--o{ Review : "writes/receives"
+    User }|..|| SubscriptionPlan : "subscribes to"
+    
     Ad ||--|| Category : "belongs to"
     Ad ||--o{ Bid : "has"
+    Ad ||--o{ Transaction : "has"
+    Ad ||--|| Delivery : "has"
 
     User {
         int id PK
         string email
         string role "USER | PRO | ADMIN"
-        string companyName "Nullable"
-        string siret "Nullable"
+        string stripeCustomerId
+        string subscriptionStatus
+        int planId FK
+    }
+
+    SubscriptionPlan {
+        int id PK
+        string name
+        float price
+        string stripePriceId
+        json limits
     }
 
     Ad {
@@ -194,9 +169,9 @@ erDiagram
         string title
         float price
         string type "SALE | AUCTION"
-        string status "ACTIVE | SOLD | ..."
-        int userId FK
-        int buyerId FK "Nullable"
+        string status
+        int userId FK "Seller"
+        int buyerId FK "Buyer"
     }
 
     Bid {
@@ -206,20 +181,31 @@ erDiagram
         int adId FK
     }
 
+    Transaction {
+        int id PK
+        float amount
+        float commissionAmount
+        string stripePaymentId
+        string status
+        int adId FK
+    }
+
+    Delivery {
+        int id PK
+        string trackingNumber
+        string carrier
+        string status
+        string address
+        int adId FK
+    }
+
     Category {
         int id PK
         string name
-        string slug
-    }
-
-    Notification {
-        int id PK
-        string message
-        boolean read
-        int userId FK
+        json formConfig
     }
 ```
 
 ---
 
-_Développé pour le Hackathon ESGI 2024._
+_Développé pour le Hackathon ESGI 2025._
