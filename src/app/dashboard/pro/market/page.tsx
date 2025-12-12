@@ -96,7 +96,7 @@ export default async function MarketPage(props: {
   return (
     <div className="container mx-auto px-4 py-8">
       <header className="mb-12">
-        <h1 className="text-4xl   text-gray-900">Le Marché Professionnel</h1>
+        <h1 className="text-4xl   text-gray-900">Le marché professionnel</h1>
         <p className="text-gray-500 mt-2">
           Accédez aux meilleures opportunités en temps réel.
         </p>

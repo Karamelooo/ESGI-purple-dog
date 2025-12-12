@@ -51,9 +51,9 @@ export default async function AdManagementPage({ params }: { params: { adId: str
                 <div className="flex justify-between items-start">
                     <div>
                         <h1 className="text-3xl font-bold mb-2 text-gray-800">
-                            Gestion de laAnnonce : {title}
+                            Gestion de l'annonce : {title}
                         </h1>
-                        <p className="text-gray-500 mb-6">ID annonce: {adId}</p>
+                        <p className="text-gray-500 mb-6">ID de l'annonce : {adId}</p>
                     </div>
                     <div className="px-4 py-2 bg-gray-100 rounded-lg">
                         <span className="text-sm font-semibold text-gray-600 uppercase">Statut : </span>

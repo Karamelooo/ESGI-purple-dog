@@ -52,7 +52,7 @@ export default async function RootLayout({
                       href="/dashboard/pro"
                       className="font-bold hover:text-primary"
                     >
-                      Espace Pro
+                      Espace professionnel
                     </Link>
                   )}
                   {session.user.role === "USER" && (
@@ -60,14 +60,14 @@ export default async function RootLayout({
                       href="/dashboard/user"
                       className="font-bold hover:text-primary"
                     >
-                      Mon Espace
+                      Mon espace
                     </Link>
                   )}
                   <Link
                     href="/dashboard/purchases"
                     className="text-sm font-semibold hover:text-purple-700"
                   >
-                    Mes Achats
+                    Mes achats
                   </Link>
                   <Link
                     href="/dashboard/purchases?tab=reservations"

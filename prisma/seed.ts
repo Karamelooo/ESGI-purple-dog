@@ -133,7 +133,7 @@ async function main() {
             weight: 2.5,
             userId: proUser.id,
             categoryId: allCats.find(c => c.slug === 'art-tableaux')?.id || allCats[0].id,
-            images: ['https://drive.google.com/file/d/1Gnd0CG47rAKaoNiQ_HjanIzNe3w-VSnX/view?usp=drive_link'],
+            images: ['https://placeholder.com/600x400'],
         }
     })
 
@@ -207,7 +207,7 @@ async function main() {
             userId: individualUser.id,
             buyerId: admin.id,
             categoryId: allCats.find(c => c.slug === 'meubles-anciens')?.id || allCats[0].id,
-            images: ['https://lh3.google.com/u/0/d/1uYmcXhU_R_E2ksc4AO-sp4uI2duQM0Gf=w2856-h1624-iv1?auditContext=prefetch'],
+            images: ['https://placeholder.com/600x400'],
         }
     })
 

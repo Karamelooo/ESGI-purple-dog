@@ -52,83 +52,82 @@ export default async function MyAdsPage() {
             Vous n'avez aucune annonce.
           </p>
         )}
-        {ads.map((ad) => (
-          <Card key={ad.id} className="hover:shadow-md transition">
-            <CardHeader className="flex flex-row justify-between items-start space-y-0 pb-2">
-              <CardTitle className="text-lg font-bold truncate pr-4">
-                {ad.title}
-              </CardTitle>
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                  ad.status
-                )}`}
-              >
-                {ad.status}
-              </span>
-            </CardHeader>
-            <CardContent>
-              <div className="aspect-video bg-gray-200 mb-4 rounded overflow-hidden">
-                <img
-                  src={`https://placehold.co/400x300?text=${encodeURIComponent(
-                    ad.title
-                  )}`}
-                  className="object-cover w-full h-full"
-                  alt={ad.title}
-                />
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>
-                  {ad.type === "AUCTION" ? "Enchère" : "Vente directe"}
-                </span>
-                <span className="font-bold">{ad.price} €</span>
-              </div>
-              <div className="mt-2 text-xs text-gray-500">
-                Publié le: {new Date(ad.createdAt).toLocaleDateString()}
-              </div>
-            </CardContent>
-            {/* Logic:
-                  - SOLD: Gérer Vente + Voir
-                  - AUCTION (Active): Voir (Only)
-                  - SALE (Active): Modifier + Voir
-              */}
+        {ads.map((ad) => {
+          const firstImage =
+            Array.isArray(ad.images) && ad.images.length > 0
+              ? ad.images[0]
+              : `https://placehold.co/400x300?text=${encodeURIComponent(ad.title)}`;
 
-            <CardFooter className="flex justify-end gap-2">
-              {ad.status === 'SOLD' ? (
-                <>
+          return (
+            <Card key={ad.id} className="hover:shadow-md transition">
+              <CardHeader className="flex flex-row justify-between items-start space-y-0 pb-2">
+                <CardTitle className="text-lg font-bold truncate pr-4">
+                  {ad.title}
+                </CardTitle>
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                    ad.status
+                  )}`}
+                >
+                  {ad.status}
+                </span>
+              </CardHeader>
+              <CardContent>
+                <div className="aspect-video bg-gray-200 mb-4 rounded overflow-hidden">
+                  <img
+                    src={firstImage}
+                    className="object-cover w-full h-full"
+                    alt={ad.title}
+                  />
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>
+                    {ad.type === "AUCTION" ? "Enchère" : "Vente directe"}
+                  </span>
+                  <span className="font-bold">{ad.price} €</span>
+                </div>
+                <div className="mt-2 text-xs text-gray-500">
+                  Publié le: {new Date(ad.createdAt).toLocaleDateString()}
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end gap-2">
+                {ad.status === 'SOLD' ? (
+                  <>
+                    <Link href={`/ad/${ad.id}`}>
+                      <Button variant="ghost" size="sm">
+                        Voir
+                      </Button>
+                    </Link>
+                    <Link href={`/dashboard/ads/management/${ad.id}`}>
+                      <Button variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                        Gérer vente
+                      </Button>
+                    </Link>
+                  </>
+                ) : ad.type === 'AUCTION' ? (
                   <Link href={`/ad/${ad.id}`}>
-                    <Button variant="ghost" size="sm">
-                      Voir
-                    </Button>
-                  </Link>
-                  <Link href={`/dashboard/ads/management/${ad.id}`}>
-                    <Button variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                      Gérer Vente
-                    </Button>
-                  </Link>
-                </>
-              ) : ad.type === 'AUCTION' ? (
-                <Link href={`/ad/${ad.id}`}>
-                  <Button variant="outline" size="sm">
-                    Voir
-                  </Button>
-                </Link>
-              ) : (
-                <>
-                  <Link href={`/ad/${ad.id}`}>
-                    <Button variant="ghost" size="sm">
-                      Voir
-                    </Button>
-                  </Link>
-                  <Link href={`/ad/${ad.id}/edit`}>
                     <Button variant="outline" size="sm">
-                      Modifier
+                      Voir
                     </Button>
                   </Link>
-                </>
-              )}
-            </CardFooter>
-          </Card>
-        ))}
+                ) : (
+                  <>
+                    <Link href={`/ad/${ad.id}`}>
+                      <Button variant="ghost" size="sm">
+                        Voir
+                      </Button>
+                    </Link>
+                    <Link href={`/ad/${ad.id}/edit`}>
+                      <Button variant="outline" size="sm">
+                        Modifier
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </CardFooter>
+            </Card>
+          );
+        })}
       </div>
     </div >
   );
