@@ -62,7 +62,7 @@ export default async function ProDashboardPage() {
           <Card className="hover:border-purple-500 transition-colors cursor-pointer h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                🏢 Accéder au Marché Pro
+                🏢 Accéder au marché professionnel
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -122,7 +122,7 @@ export default async function ProDashboardPage() {
                       {ad.status === 'SOLD' ? (
                         <Link href={`/dashboard/ads/management/${ad.id}`}>
                           <Button variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                            Gérer Vente
+                            Gérer vente
                           </Button>
                         </Link>
                       ) : (

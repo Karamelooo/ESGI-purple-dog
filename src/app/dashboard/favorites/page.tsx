@@ -12,7 +12,7 @@ export default async function FavoritesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Mes Favoris</h1>
+      <h1 className="text-2xl font-bold">Mes favoris</h1>
 
       <div className="bg-white p-12 rounded-xl shadow-sm border border-gray-200 text-center">
         <div className="mx-auto w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mb-4">

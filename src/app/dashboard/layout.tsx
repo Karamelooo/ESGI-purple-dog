@@ -33,6 +33,7 @@ export default async function DashboardLayout({
   const isProOrAdmin = isPro || isAdmin;
 
   const basePath = isPro ? "/dashboard/pro" : "/dashboard/user";
+  const profilePath = isPro ? "/dashboard/pro/profile" : "/dashboard/profile";
 
   const feedbackLink = !isPro ? (
     <Link href={`${basePath}/feedback`}>
@@ -103,7 +104,7 @@ export default async function DashboardLayout({
             </Link>
 
             {/* Mon Profil & Sécurité */}
-            <Link href={`/dashboard/profile`}>
+            <Link href={profilePath}>
               <Button
                 variant="ghost"
                 className="w-full justify-start text-indigo-600 hover:text-indigo-700"
