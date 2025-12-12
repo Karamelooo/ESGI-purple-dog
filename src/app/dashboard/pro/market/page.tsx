@@ -69,7 +69,17 @@ export default async function MarketPage(props: {
   const [ads, categories, priceStats] = await Promise.all([
     prisma.ad.findMany({
       where,
-      include: { user: true },
+      include: {
+        user: true,
+        favoritedBy: {
+          where: {
+            id: Number(session?.user?.id) || -1,
+          },
+          select: {
+            id: true,
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
     }),
     prisma.category.findMany({ orderBy: { name: "asc" } }),

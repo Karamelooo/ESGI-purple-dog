@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { Ad, User } from "@prisma/client";
 import { Clock, ShoppingBag } from "lucide-react";
+import { FavoriteButton } from "@/components/ui/favorite-button";
 
 interface MarketGridProps {
-  ads: (Ad & { user: User })[];
+  ads: (Ad & { user: User } & { favoritedBy?: { id: number }[] })[];
 }
 
 export function MarketGrid({ ads }: MarketGridProps) {
@@ -56,6 +57,18 @@ export function MarketGrid({ ads }: MarketGridProps) {
                   Vendu
                 </div>
               )}
+
+              {/* Favorite Button */}
+              <div className="absolute top-4 right-4 z-10">
+                <FavoriteButton
+                  adId={ad.id}
+                  initialIsFavorite={
+                    "favoritedBy" in ad &&
+                    Array.isArray(ad.favoritedBy) &&
+                    ad.favoritedBy.length > 0
+                  }
+                />
+              </div>
             </div>
 
             <div className="space-y-1">
