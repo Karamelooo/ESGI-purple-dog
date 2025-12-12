@@ -59,6 +59,7 @@ model User {
   reservedAds   Ad[]           @relation("ReservedAds")
   reviewsWritten Review[]      @relation("ReviewsWritten")
   reviewsReceived Review[]     @relation("ReviewsReceived")
+  favorites     Ad[]           @relation("UserFavorites")
 }
 
 model SubscriptionPlan {
@@ -130,6 +131,9 @@ model Ad {
   messages    Message[]
   transactions Transaction[]
   delivery     Delivery?
+
+
+  favoritedBy  User[]    @relation("UserFavorites")
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

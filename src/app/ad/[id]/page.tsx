@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { BidForm } from "@/components/bid-form";
 import { BuyButton } from "@/components/buy-button";
 import { Countdown } from "@/components/countdown";
+import { FavoriteButton } from "@/components/ui/favorite-button";
 
 // Badge fallback if not exists
 function StatusBadge({ status }: { status: string }) {
@@ -30,6 +31,14 @@ export default async function AdPage({ params }: { params: { id: string } }) {
       user: true,
       category: true,
       bids: { orderBy: { amount: "desc" } },
+      favoritedBy: {
+        where: {
+          id: Number(session?.user?.id) || -1,
+        },
+        select: {
+          id: true,
+        },
+      },
     },
   });
 
@@ -89,7 +98,18 @@ export default async function AdPage({ params }: { params: { id: string } }) {
             </span>
           </div>
 
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">{ad.title}</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-between">
+            {ad.title}
+            <FavoriteButton
+              adId={ad.id}
+              initialIsFavorite={
+                "favoritedBy" in ad &&
+                Array.isArray(ad.favoritedBy) &&
+                ad.favoritedBy.length > 0
+              }
+              className="static transform-none bg-gray-100 hover:bg-gray-200"
+            />
+          </h1>
           <p className="text-xl font-medium text-purple-700 mb-6">
             {ad.type === "AUCTION"
               ? `Enchère en cours : ${ad.price ?? 0} €`
