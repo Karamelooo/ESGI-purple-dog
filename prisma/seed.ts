@@ -116,7 +116,7 @@ async function main() {
             weight: 2.5,
             userId: proUser.id,
             categoryId: allCats.find(c => c.slug === 'art-tableaux')?.id || allCats[0].id,
-            images: ['https://placehold.co/600x400?text=Tableau+XIXe'],
+            images: ['https://drive.google.com/file/d/1Gnd0CG47rAKaoNiQ_HjanIzNe3w-VSnX/view?usp=drive_link'],
         }
     })
 
@@ -131,7 +131,7 @@ async function main() {
             weight: 0.1,
             userId: individualUser.id,
             categoryId: allCats.find(c => c.slug === 'bijoux-montres')?.id || allCats[0].id,
-            images: ['https://placehold.co/600x400?text=Montre+Omega', 'https://placehold.co/600x400?text=Dos+Montre'],
+            images: ['https://cdn.pixabay.com/photo/2014/10/03/14/18/watch-471771_1280.jpg'],
         }
     })
 
@@ -148,7 +148,7 @@ async function main() {
             categoryId: allCats.find(c => c.slug === 'collection')?.id || allCats[0].id,
             reservedById: individualUser.id,
             reservedUntil: new Date(Date.now() + 10 * 60 * 1000),
-            images: ['https://placehold.co/600x400?text=Vase+Ming'],
+            images: ['https://cdn.pixabay.com/photo/2013/10/12/20/04/ceramic-vase-194784_1280.jpg'],
         }
     })
 
@@ -164,7 +164,7 @@ async function main() {
             userId: proUser.id,
             buyerId: buyerUser.id,
             categoryId: allCats.find(c => c.slug === 'art-tableaux')?.id || allCats[0].id,
-            images: ['https://placehold.co/600x400?text=Vase+Galle'],
+            images: ['https://cdn.pixabay.com/photo/2014/06/01/22/25/vase-360056_1280.jpg', 'https://cdn.pixabay.com/photo/2014/06/01/22/25/vase-360057_1280.jpg'],
         }
     })
 
@@ -190,7 +190,7 @@ async function main() {
             userId: individualUser.id,
             buyerId: admin.id,
             categoryId: allCats.find(c => c.slug === 'meubles-anciens')?.id || allCats[0].id,
-            images: ['https://placehold.co/600x400?text=Lampe+Jielde'],
+            images: ['https://lh3.google.com/u/0/d/1uYmcXhU_R_E2ksc4AO-sp4uI2duQM0Gf=w2856-h1624-iv1?auditContext=prefetch'],
         }
     })
 
