@@ -53,7 +53,7 @@ export default async function PaymentPage() {
   return (
     <div className="container mx-auto py-8 max-w-2xl">
       <h1 className="text-3xl font-bold mb-8 text-purple-900">
-        Moyens de Paiement
+        Moyens de paiement
       </h1>
 
       <div className="space-y-6">

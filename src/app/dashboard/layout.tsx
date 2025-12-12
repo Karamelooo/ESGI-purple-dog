@@ -75,7 +75,7 @@ export default async function DashboardLayout({
             {/* Mes annonces */}
             <Link href={`/dashboard/ads`}>
               <Button variant="ghost" className="w-full justify-start">
-                Mes Annonces
+                Mes annonces
               </Button>
             </Link>
 
@@ -108,7 +108,7 @@ export default async function DashboardLayout({
                 variant="ghost"
                 className="w-full justify-start text-indigo-600 hover:text-indigo-700"
               >
-                Mon Profil & Sécurité
+                Mon profil et sécurité
               </Button>
             </Link>
 

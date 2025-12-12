@@ -40,7 +40,7 @@ export default async function MyAdsPage() {
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-purple-900">Mes Annonces</h1>
+        <h1 className="text-3xl font-bold text-purple-900">Mes annonces</h1>
         <Link href="/create-ad">
           <Button>Créer une annonce</Button>
         </Link>

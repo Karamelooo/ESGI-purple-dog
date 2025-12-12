@@ -44,16 +44,16 @@ export default async function PurchasesPage() {
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-8 text-purple-900">
-        Mes Achats & Enchères
+        Mes achats et enchères
       </h1>
 
       <Tabs defaultValue="purchases">
         <TabsList className="mb-4">
           <TabsTrigger value="cart">
-            Mon Panier ({reservedAds.length})
+            Mon panier ({reservedAds.length})
           </TabsTrigger>
-          <TabsTrigger value="purchases">Mes Achats</TabsTrigger>
-          <TabsTrigger value="bids">Mes Enchères en cours</TabsTrigger>
+          <TabsTrigger value="purchases">Mes achats</TabsTrigger>
+          <TabsTrigger value="bids">Mes enchères en cours</TabsTrigger>
         </TabsList>
 
         <TabsContent value="cart">

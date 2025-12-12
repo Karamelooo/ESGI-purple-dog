@@ -51,9 +51,9 @@ export default async function AdManagementPage({ params }: { params: { adId: str
                 <div className="flex justify-between items-start">
                     <div>
                         <h1 className="text-3xl font-bold mb-2 text-gray-800">
-                            Gestion de l'Annonce : {title}
+                            Gestion de laAnnonce : {title}
                         </h1>
-                        <p className="text-gray-500 mb-6">ID Annonce: {adId}</p>
+                        <p className="text-gray-500 mb-6">ID annonce: {adId}</p>
                     </div>
                     <div className="px-4 py-2 bg-gray-100 rounded-lg">
                         <span className="text-sm font-semibold text-gray-600 uppercase">Statut : </span>
@@ -64,14 +64,14 @@ export default async function AdManagementPage({ params }: { params: { adId: str
                 </div>
 
                 <Link href="/dashboard/ads" className="mb-8 inline-block text-blue-600 hover:text-blue-800 font-medium">
-                    &larr; Retour à Mes Annonces
+                    &larr; Retour à mes annonces
                 </Link>
 
                 {/* SECTION LOGISTIQUE (SI VENDU) */}
                 {status === 'SOLD' && soldDetails && (
                     <section className="mb-10 border border-blue-100 rounded-xl overflow-hidden shadow-sm">
                         <div className="bg-blue-50 px-6 py-4 border-b border-blue-100">
-                            <h2 className="text-xl font-bold text-blue-900">📦 Détails de la vente & Livraison</h2>
+                            <h2 className="text-xl font-bold text-blue-900">📦 Détails de la vente et livraison</h2>
                         </div>
                         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
