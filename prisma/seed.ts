@@ -133,7 +133,7 @@ async function main() {
             weight: 2.5,
             userId: proUser.id,
             categoryId: allCats.find(c => c.slug === 'art-tableaux')?.id || allCats[0].id,
-            images: ['https://placeholder.com/600x400'],
+            images: ['https://placehold.co/600x400'],
         }
     })
 
@@ -207,7 +207,7 @@ async function main() {
             userId: individualUser.id,
             buyerId: admin.id,
             categoryId: allCats.find(c => c.slug === 'meubles-anciens')?.id || allCats[0].id,
-            images: ['https://placeholder.com/600x400'],
+            images: ['https://placehold.co/600x400'],
         }
     })
 

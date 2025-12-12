@@ -262,7 +262,7 @@ export function EditAdForm({ categories, ad }: EditAdFormProps) {
                         <Label>
                             {adType === "AUCTION" ? "Prix de départ (€)" : "Prix (€)"}
                         </Label>
-                        <Input name="price" type="number" required min="1" step="0.01" defaultValue={ad.price} />
+                        <Input name="price" type="number" required min="1" step="0.01" defaultValue={ad.price ?? ''} />
                     </div>
 
                     {adType === "AUCTION" && (
